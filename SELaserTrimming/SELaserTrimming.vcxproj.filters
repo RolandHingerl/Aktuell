@@ -1,0 +1,79 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Library %28import%29">
+      <UniqueIdentifier>{617fc323-6f3b-4cf0-aa7c-5b87e0a91164}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="targetver.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\SEMeasurementCell.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\SETrimmingChamber.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\SEComMicroLas.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\SEComPlc.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\SELaserTrimming.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\SEHelpFunctions.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Source\SELaserTrimming.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\SEMeasurementCell.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\SETrimmingChamber.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\SEComMicroLas.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\SEComPlc.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\SEHelpFunctions.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="Library\LSTest.lib">
+      <Filter>Library %28import%29</Filter>
+    </Library>
+    <Library Include="Library\OpConServicesCommon.lib">
+      <Filter>Library %28import%29</Filter>
+    </Library>
+    <Library Include="Library\WS2_32.Lib">
+      <Filter>Library %28import%29</Filter>
+    </Library>
+    <Library Include="Library\IPHlpApi.Lib">
+      <Filter>Library %28import%29</Filter>
+    </Library>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="SELaserTrimming.rc" />
+  </ItemGroup>
+</Project>

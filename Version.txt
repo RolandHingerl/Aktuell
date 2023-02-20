@@ -1,0 +1,219 @@
+-------------------------------- Version.txt Vorlageinformationen ---------------------------------
+             Vorlage: Version.txt Vorlage für SW MC und SW DSP Projekte
+             Version: V02.10
+           Bedienung: - Bitte keine Tabulatorzeichen verwenden!
+                      - Trennung zwischen den Wörtern und Einrückungen mit Leerzeichen realisieren!
+                      - Zeilen in denen die Angaben nicht notwendig sind mit " - "kennzeichnen aber
+                        nicht löschen.
+                      - Es dürfen nicht mehr als 100 Zeichen pro Zeile eingegeben werden.
+--------------------------------------- Projektbeschreibung ---------------------------------------
+             Projekt: SELasertrimming
+        Beschreibung: Mess-/Abgleichapplikation für SE Laserabgleich BaP
+             SPL-Nr.: R1292
+            K-Gruppe: -
+               K-Typ: -
+           EL-Gruppe: -
+            Inv.-Nr.: 1213853
+---------------------------------------------- Info -----------------------------------------------
+               Index:
+                       [A] Aufgabe
+                       [F] Fehler
+                       [U] Update
+                         o geändert
+                         + hinzugefügt
+                         - entfernt
+                         
+---------------------------------------- Versionshistorie ----------------------------------------- 
+Version: V02.07
+               Datum: 08.07.2020
+          Bearbeiter: TEF3.49/Bätz
+   Entwickl. System : MS Visual Studio 2010
+   Entwickl. Umgeb. : Windows 10
+   Zielsystem Umgeb.: Windows 7
+  == Änderungen =================================================================================
+  [A] Headline at result data file changed
+--------------------------------------------------------------------------------------------------- 
+     Version: V02.06
+               Datum: 06.07.2020
+          Bearbeiter: TEF3.49/Bätz
+   Entwickl. System : MS Visual Studio 2010
+   Entwickl. Umgeb. : Windows 10
+   Zielsystem Umgeb.: Windows 7
+  == Änderungen =================================================================================
+  [A] Bugfix: set error at leakage rate/vacuum failure correct
+--------------------------------------------------------------------------------------------------- 
+      Version: V02.05
+               Datum: 21.04.2020
+          Bearbeiter: TEF3.49/Bätz
+   Entwickl. System : MS Visual Studio 2010
+   Entwickl. Umgeb. : Windows 10
+   Zielsystem Umgeb.: Windows 7
+  == Änderungen =================================================================================
+  [A] Positioncalculation changed for additional cuts
+--------------------------------------------------------------------------------------------------- 
+	      Version: V02.04
+               Datum: 19.04.2017
+          Bearbeiter: TEF3.49/Bätz
+   Entwickl. System : MS Visual Studio 2010
+   Entwickl. Umgeb. : Windows 7
+   Zielsystem Umgeb.: Windows 7
+  == Änderungen =================================================================================
+  [A] SEMeasurementCell: New firmware for ADVOV (HK=3.452,MOD=3.410)
+--------------------------------------------------------------------------------------------------- 
+	      Version: V02.03
+               Datum: 14.03.2016
+          Bearbeiter: TEF3.49/Bätz
+   Entwickl. System : MS Visual Studio 2010
+   Entwickl. Umgeb. : Windows 7
+   Zielsystem Umgeb.: Windows 7
+  == Änderungen =================================================================================
+  [A] SEComPlc: "IpOffset" divided to "IpOffsetGasoline" and "IpOffsetDiesel"
+  [A] SETrimmingChamber: Diesel qualification now with other diesel offset
+---------------------------------------------------------------------------------------------------   
+	      Version: V02.02
+               Datum: 08.03.2016
+          Bearbeiter: TEF3.49/Bätz
+   Entwickl. System : MS Visual Studio 2010
+   Entwickl. Umgeb. : Windows 7
+   Zielsystem Umgeb.: Windows 7
+  == Änderungen =================================================================================
+  [A] new define for part status
+  [A] no trimming or measure action at deactivated tiepoints
+---------------------------------------------------------------------------------------------------        
+	      Version: V02.01
+               Datum: 24.11.2015
+          Bearbeiter: TEF3.49/Bätz
+   Entwickl. System : MS Visual Studio 2010
+   Entwickl. Umgeb. : Windows 7
+   Zielsystem Umgeb.: Windows 7
+  == Änderungen =================================================================================
+  [U] New "LSTest.dll" and "advhk_V3.451_RT.hex" to fix card download problems
+  [U] Update ADVOV card version now with 3 decimal places
+---------------------------------------------------------------------------------------------------
+          Version: V02.00
+               Datum: 30.04.2015
+          Bearbeiter: TEF3.49/Bätz
+   Entwickl. System : MS Visual Studio 2010
+   Entwickl. Umgeb. : Windows 7
+   Zielsystem Umgeb.: Windows XP
+  == Änderungen =================================================================================
+  [U] First running version on "Laser 3"
+---------------------------------------------------------------------------------------------------
+          Version: V01.11
+               Datum: 10.12.2014
+          Bearbeiter: TEF3.49/Bätz
+   Entwickl. System : MS Visual Studio 2010
+   Entwickl. Umgeb. : Windows 7
+   Zielsystem Umgeb.: Windows XP
+  == Änderungen =================================================================================
+  [U] SEComMicroLas: New function write line to se
+  [U] SETrimmingChamber: Write line over text instead of trimming cut
+  [U] SETrimmingChamber: Position of line write changed
+---------------------------------------------------------------------------------------------------
+           Version: V01.09
+               Datum: 25.06.2014
+          Bearbeiter: TEF3.49/Bätz
+   Entwickl. System : MS Visual Studio 2010
+   Entwickl. Umgeb. : Windows 7
+   Zielsystem Umgeb.: Windows XP
+  == Änderungen =================================================================================
+  [U] SETrimmingChamber: New function to regulate laser power at process
+  [U] SETrimmingChamber: Write of file with fflush
+  [U] SETrimmingChamber: Limiting pollution to 100% 
+---------------------------------------------------------------------------------------------------
+           Version: V01.08
+               Datum: 18.06.2014
+          Bearbeiter: TEF3.49/Bätz
+   Entwickl. System : MS Visual Studio 2010
+   Entwickl. Umgeb. : Windows 7
+   Zielsystem Umgeb.: Windows XP
+  == Änderungen =================================================================================
+  [U] SEHelpFunctions: Round function insert
+  [U] SEMeasurementCell: "ChamberActive" eliminated
+  [U] SETrimmingChamber: Round all normal values to 2 decimal places
+---------------------------------------------------------------------------------------------------
+           Version: V01.07
+               Datum: 27.01.2014
+          Bearbeiter: TEF3.49/Bätz
+   Entwickl. System : MS Visual Studio 2010
+   Entwickl. Umgeb. : Windows 7
+   Zielsystem Umgeb.: Windows XP
+  == Änderungen =================================================================================
+  [U] Chamber 2 integrated
+---------------------------------------------------------------------------------------------------
+           Version: V01.06
+               Datum: 06.02.2013
+          Bearbeiter: TEF3.49/Bätz
+   Entwickl. System : MS Visual Studio 2010
+   Entwickl. Umgeb. : Windows 7
+   Zielsystem Umgeb.: Windows XP
+  == Änderungen =================================================================================
+  [U] HandleProcess: Normal measurement status turned (at start all characteristics nio)
+---------------------------------------------------------------------------------------------------
+           Version: V01.05
+               Datum: 21.11.2012
+          Bearbeiter: TEF3.49/Bätz
+   Entwickl. System : MS Visual Studio 2010
+   Entwickl. Umgeb. : Windows 7
+   Zielsystem Umgeb.: Windows XP
+  == Änderungen =================================================================================
+  [U] SEComMicroLas: Increased scanner speed at write text
+---------------------------------------------------------------------------------------------------
+           Version: V01.04
+               Datum: 08.11.2012
+          Bearbeiter: TEF3.49/Bätz
+   Entwickl. System : MS Visual Studio 2010
+   Entwickl. Umgeb. : Windows 7
+   Zielsystem Umgeb.: Windows XP
+  == Änderungen =================================================================================
+  [U] SETrimmingChamber: Set trimming done flag due to part state
+  [U] SETrimmingChamber: Set nio/rework reason
+  [U] SETrimmingChamber: Elimination of stability time when measure once
+  [U] SETrimmingChamber: Structure "AssemblyDataTrimmingTiepoint" changed
+---------------------------------------------------------------------------------------------------
+           Version: V01.03
+               Datum: 12.09.2012
+          Bearbeiter: TEF3.49/Bätz
+   Entwickl. System : MS Visual Studio 2010
+   Entwickl. Umgeb. : Windows 7
+   Zielsystem Umgeb.: Windows XP
+  == Änderungen =================================================================================
+  [U] SETrimmingChamber: Ipstabi debug info eliminated
+---------------------------------------------------------------------------------------------------
+            Version: V01.02
+               Datum: 05.09.2012
+          Bearbeiter: TEF3.49/Bätz
+   Entwickl. System : MS Visual Studio 2010
+   Entwickl. Umgeb. : Windows 7
+   Zielsystem Umgeb.: Windows XP
+  == Änderungen =================================================================================
+  [U] SETrimmingChamber: Normal measurement now with state machine
+  [U] SETrimmingChamber: New function "SaveNormalJournal" to save journal
+  [U] SETrimmingChamber: Universal normal measurement fixed
+  [U] SEMeasurementCell: "MCxStop" and "MCxTFlowResult" locking each other because of no multithread feature of indutron dll  
+---------------------------------------------------------------------------------------------------
+             Version: V01.01
+               Datum: 06.08.2012
+          Bearbeiter: TEF3.49/Bätz
+   Entwickl. System : MS Visual Studio 2010
+   Entwickl. Umgeb. : Windows 7
+   Zielsystem Umgeb.: Windows XP
+  == Änderungen =================================================================================
+  [U] SEComPlc: Error codes changed
+  [U] SETrimmingChamber: Status codes order at normal measurement changed 
+  [U] SETrimmingChamber: RiDcn lower limit changed (Schülein: connection only important, not the value)
+  [U] SETrimmingChamber: Stability time now with advov card result values
+  [U] SETrimmingChamber: Pressure/flow outside now nio criteria
+  [U] SETrimmingChamber: Output stabi data to logging-file
+  [U] SETrimmingChamber: Stability check now with prototype handling (SE stable if one measurement inside limit)
+---------------------------------------------------------------------------------------------------
+             Version: V01.00
+               Datum: 02.08.2012
+          Bearbeiter: TEF3.49/Bätz
+   Entwickl. System : MS Visual Studio 2010
+   Entwickl. Umgeb. : Windows 7
+   Zielsystem Umgeb.: Windows XP
+  == Änderungen =================================================================================
+  [U] First running version
+---------------------------------------------------------------------------------------------------
+
