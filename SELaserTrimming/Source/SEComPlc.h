@@ -122,58 +122,58 @@
 //parameter microlas scanner move absolute
 struct ParamDataScannerMoveAbs
 {
-  float XPos;																															//x-position [mm]
-  float YPos;																															//y-position [mm]
-  float ZPos;																															//z-position [mm]
+  float XPos;	//x-position [mm]
+  float YPos;	//y-position [mm]
+  float ZPos;	//z-position [mm]
 };
 
 //parameter trimming cut 
 struct ParamDataScannerTrimmingCut
 {
-  float StartXPos;																												//start x-position [mm]																											
-  float StartYPos;																												//start y-position [mm]
-  float StartZPos;																												//start z-position [mm]
-  float EndXPos;																													//end x-position [mm]
-  float EndYPos;																													//end y-position [mm]
-  float EndZPos;																													//end z-position [mm]
-  float LaserPower;																											  //laser power [mW]
+  float StartXPos;	 //start x-position [mm]																											
+  float StartYPos;	 //start y-position [mm]
+  float StartZPos;	 //start z-position [mm]
+  float EndXPos;	 //end x-position [mm]
+  float EndYPos;	 //end y-position [mm]
+  float EndZPos;	 //end z-position [mm]
+  float LaserPower;	 //laser power [mW]
 };
 
 //parameter image processing
 struct ParamDataImageProcessing
 {
-  unsigned int Tiepoint;																									//tiepoint
-  float XPos;																															//x-position [mm]
-  float YPos;																															//y-position [mm]
-  float ZPos;																															//z-position [mm]
-  float Diameter;																													//diameter of hole [mm]
+  unsigned int Tiepoint; //tiepoint
+  float XPos;	  //x-position [mm]
+  float YPos;	  //y-position [mm]
+  float ZPos;	  //z-position [mm]
+  float Diameter; //diameter of hole [mm]
 };
 
 //parameter laser point
 struct ParamDataScannerLaserPoint
 {
-  float XPos;																															//x-position [mm]
-  float YPos;																															//y-position [mm]
-  float ZPos;																															//z-position [mm]
-  float LaserPower;																												//laser power [mW]
-  float LaserTime;																												//duration [ms]
+  float XPos;	//x-position [mm]
+  float YPos;	//y-position [mm]
+  float ZPos;	//z-position [mm]
+  float LaserPower;	//laser power [mW]
+  float LaserTime;	//duration [ms]
 };
 
 //parameter write text
 struct ParamDataScannerWriteText
 {
-  char Code[7];																														//test to write
-  float XPos;																															//x-position [mm]
-  float YPos;																															//y-position [mm]
-  float ZPos;																															//z-position [mm]
-  float Angle;																														//angle [°]
-  float LaserPower;																												//laser power [mW]
+  char Code[7];	//test to write
+  float XPos;	//x-position [mm]
+  float YPos;	//y-position [mm]
+  float ZPos;	//z-position [mm]
+  float Angle;		 //angle [°]
+  float LaserPower;	 //laser power [mW]
 };
 
 //parameter data reference cell
 struct ParamStationDataMainReferenceCell
 {
-  float IpSetpointRef[2];                                                 //ip setpoint reference sense
+  float IpSetpointRef[2];    //ip setpoint reference sense
 };
 
 //parameter station data reference cell
@@ -186,41 +186,41 @@ struct ParamStationDataReferenceCell
 //parameter station data trimming cell
 struct ParamStationDataTrimmingCell
 {
-  float ParamHeaterCabelResistance [ CELL_TIEPOINT_COUNT ];						  	//heater cable resistance [Ω]
+  float ParamHeaterCabelResistance [ CELL_TIEPOINT_COUNT ];	//heater cable resistance [Ω]
 };
 
 //geometry data
 struct ParamStationDataGeometry
 {
-  float PrePositionSquare[4];                                             //pre position square [mm]
+  float PrePositionSquare[4]; //pre position square [mm]
 };
 //trimm data
 struct ParamStationDataProcess 
 {	
-  float IpOffsetGasoline;																									//ip offset gasoline [µA] (formally: IP_offset)
-	float IpOffsetDiesel;																								  	//ip offset diesel [µA] (formally: IP_offset)
+  float IpOffsetGasoline;	//ip offset gasoline [µA] (formally: IP_offset)
+	float IpOffsetDiesel;	//ip offset diesel [µA] (formally: IP_offset)
 };
 
 //laser data
 struct ParamStationDataLaser
 {
-  unsigned int RTC5SerialNumber;																					//rtc5 serial number
-  char CorrectionFile [16]; 																							//correction file
-  unsigned int CalibrationFactorXY; 																			//calib factor xy
-  unsigned int CalibrationFactorZ; 																				//calib factor z
-  float ZCorrA; 																													//z correction a
-  float ZCorrB; 																													//z correction b
-  float ZCorrC;  																													//z correction c
-  unsigned int JumpSpeed;																									//jump speed
-  float LaserOnDelay; 																										//laser on delay
-  float LaserOffDelay;																										//laser off delay
-  float JumpDelay; 																												//jump delay
-  float MarkDelay; 																												//mark delay
-  float PolygonDelay; 																										//polygon delay
-  unsigned int LaserControlType;																					//laser control type
-  unsigned int LaserPowerDACNo; 																					//laser dac number
-  float LaserPowerScale;																									//laser power scale
-  float LaserPowerDelay;																									//laser power delay
+  unsigned int RTC5SerialNumber;	//rtc5 serial number
+  char CorrectionFile [16]; 		//correction file
+  unsigned int CalibrationFactorXY; //calib factor xy
+  unsigned int CalibrationFactorZ; 	//calib factor z
+  float ZCorrA;  //z correction a
+  float ZCorrB;  //z correction b
+  float ZCorrC;  //z correction c
+  unsigned int JumpSpeed;	 //jump speed
+  float LaserOnDelay; 		//laser on delay
+  float LaserOffDelay;		//laser off delay
+  float JumpDelay; 			//jump delay
+  float MarkDelay; 			//mark delay
+  float PolygonDelay; 		//polygon delay
+  unsigned int LaserControlType; //laser control type
+  unsigned int LaserPowerDACNo;  //laser dac number
+  float LaserPowerScale;		 //laser power scale
+  float LaserPowerDelay;		 //laser power delay
 };
 
 //trimming process
@@ -242,21 +242,21 @@ struct ParamStationDataTrimmingChamber
 //parameter data reference cell
 struct ParamDataMainReferenceCell
 {
-  unsigned int HeatingMode;																				        //heating mode (formally: ReferenceHeatingContinuous)
-  float HeatingVoltage;																										//heating voltage (formally: U_Heiz)
-  float HeatingRi;																												//internal resistance (formally: Ri)
-  float HeatingPower;																											//heating power at permanent heating
-  float HeatingTime;																											//heating time (formally: HeatTime)
-  unsigned int TestGasOverRef;																						//test gas over reference sense (formally: _Ref_pruefen)
-  float AllowableIpVariation;																							//allowable ip variation reference sense (formally: d_IP_Ref)
-  float IpRef;																														//ip ref (formally: IPref)   
-  unsigned int EnableNernstRegulation;																		//enable nernst regulation (formally: NernstRegulation)
-  float NernstVoltage;																										//nernst voltage (formally: U_Nernst)   
-  float NernstRegulationStartDelay;																				//nernst regulation start delay 
-  float PumpVoltage;																											//pump voltage (formally: U_Pump)
-  float NegativePumpPulsVoltage;																					//pump voltage pulse (not used)
-  float NegativePumpPulsDelay;																						//pump voltage pulse delay (not used)
-  float NegativePumpPulsDuration;																					//pump voltage pulse duration (not used)
+  unsigned int HeatingMode;		 //heating mode (formally: ReferenceHeatingContinuous)
+  float HeatingVoltage;		//heating voltage (formally: U_Heiz)
+  float HeatingRi;			//internal resistance (formally: Ri)
+  float HeatingPower;		//heating power at permanent heating
+  float HeatingTime;		//heating time (formally: HeatTime)
+  unsigned int TestGasOverRef;	//test gas over reference sense (formally: _Ref_pruefen)
+  float AllowableIpVariation;	//allowable ip variation reference sense (formally: d_IP_Ref)
+  float IpRef;	//ip ref (formally: IPref)   
+  unsigned int EnableNernstRegulation;	//enable nernst regulation (formally: NernstRegulation)
+  float NernstVoltage;		//nernst voltage (formally: U_Nernst)   
+  float NernstRegulationStartDelay;	//nernst regulation start delay 
+  float PumpVoltage;	//pump voltage (formally: U_Pump)
+  float NegativePumpPulsVoltage;	//pump voltage pulse (not used)
+  float NegativePumpPulsDelay;		//pump voltage pulse delay (not used)
+  float NegativePumpPulsDuration;	//pump voltage pulse duration (not used)
 };
 
 //parameter data reference cell
@@ -292,25 +292,25 @@ struct ParamDataMainTrimmingCell
 //parameter data stability
 struct ParamDataRiStability 
 {
-  float RiStabilityUpperLimit;																						//ri stability upper limit [Ω]
-  float RiStabilityLowerLimit;																						//ri stability lower limit [Ω]
-  float RiStabilityDuration;																							//ri stability max duration [s]
+  float RiStabilityUpperLimit;	//ri stability upper limit [Ω]
+  float RiStabilityLowerLimit;	//ri stability lower limit [Ω]
+  float RiStabilityDuration;	//ri stability max duration [s]
 };
 
 //parameter data ip measurement
 struct ParamDataIpMeasurement 
 {
-  float O2Mrg;																														//o2 contend test gas [Vol%] (formally: O2_MRG)"       
-  float O2Air;																														//o2 contend air [Vol%] (formally: O2_Luft)"     
-  float KValue;																														//k-value [mbar] (formally: K_Wert)"   
-  float PPreHeating;                                                      //pre heating pressure setpoint	[mbar] 
-  float PSetpoint;																												//pressure setpoint [mbar] (formally: P_Soll)"     
-  float	PMaxAllowedDiff;                                                  //max allowed pressure difference [mbar]
-  float FlowSetpoint;	                                                    //chamber flow setpoint [ccm/min]
-  float FlowMaxAllowedDiff;                                               //chamber flow max allowed difference [ccm/min]
-  float EvacuatedPressureAllowedMax;																			//max allowed evacuated pressure [mbar]
-  float LeackageRateAllowedMax;                                           //max allowed leackage rate [mbar/s]
-  int IpCorrectionMode;																										//ip correction mode (formally: _Refsens)"       
+  float O2Mrg;	//o2 contend test gas [Vol%] (formally: O2_MRG)"       
+  float O2Air;	//o2 contend air [Vol%] (formally: O2_Luft)"     
+  float KValue;	//k-value [mbar] (formally: K_Wert)"   
+  float PPreHeating;      //pre heating pressure setpoint	[mbar] 
+  float PSetpoint;		//pressure setpoint [mbar] (formally: P_Soll)"     
+  float	PMaxAllowedDiff;  //max allowed pressure difference [mbar]
+  float FlowSetpoint;	   //chamber flow setpoint [ccm/min]
+  float FlowMaxAllowedDiff;   //chamber flow max allowed difference [ccm/min]
+  float EvacuatedPressureAllowedMax;	//max allowed evacuated pressure [mbar]
+  float LeackageRateAllowedMax;    //max allowed leackage rate [mbar/s]
+  int IpCorrectionMode;		//ip correction mode (formally: _Refsens)"       
   float IpStable;																													//ip stable limit [%] (formally: IP_Stabil)"       
   float IpStableTime1;			  																						//ip stable time 1 (multiple 1,0s) [s] (formally: Zeit1_IP_stabil)"       
   float IpStableTime2;																										//ip stable time 2 (multiple 1,0s) [s] (formally: Zeit2_IP_stabil)"     
@@ -336,10 +336,10 @@ struct ParamDataIpMeasurement
 //parameter data ri regulation
 struct ParamDataRiRegulaton 
 {
-  float RiRegMaxUH;																												//max heater voltage at ri regulation [V]
-  float RiRegKp;																													//pid-regulator kp-value [1]
-  float RiRegKi;																													//pid-regulator ki-value [1]
-  float RiRegKd;																													//pid-regulator kd-value [1]
+  float RiRegMaxUH;	//max heater voltage at ri regulation [V]
+  float RiRegKp;	//pid-regulator kp-value [1]
+  float RiRegKi;	//pid-regulator ki-value [1]
+  float RiRegKd;	//pid-regulator kd-value [1]
 };
 
 //parameter data trimming cell
@@ -354,51 +354,51 @@ struct ParamDataTrimmingCell
 //geometry data
 struct ParamDataGeometry
 {
-  float Fissure;																													//fissure [mm] (formally: Spalt Gob-Fein)    
-  float HoldBackPositionFineTrim;																					//hold back position fine trimming [mm] (formally: d_max_fein )        
-  float StartDistanceRawTrim;																							//start distance raw trimming [mm] (formally: Start_grob)       
-  float StartDistanceFineTrim;																						//start distance fine trimming [mm] (formally: Start_fein)        
-  float Step1RawTrim;																											//step 1 raw trimming [mm] (formally: Step1_grob)       
-  float Step1FineTrim;																										//step 1 fine trimming [mm] (formally: Step1_fein)   
+  float Fissure;	//fissure [mm] (formally: Spalt Gob-Fein)    
+  float HoldBackPositionFineTrim;	//hold back position fine trimming [mm] (formally: d_max_fein )        
+  float StartDistanceRawTrim;	//start distance raw trimming [mm] (formally: Start_grob)       
+  float StartDistanceFineTrim;		//start distance fine trimming [mm] (formally: Start_fein)        
+  float Step1RawTrim;		//step 1 raw trimming [mm] (formally: Step1_grob)       
+  float Step1FineTrim;		//step 1 fine trimming [mm] (formally: Step1_fein)   
 };
 
 //trimm data
 struct ParamDataProcess 
 {				    
-  float IpSetpoint;																												//ip setpoint [µA] (formally: IP_soll)
-  float	MinIpForTrimming;                                                 //min. ip for trimming [µA]
-  unsigned int MaxPassage;																							  //max passage [1] (formally: _max_Schnitte)
-  float DeltaIpNoise;																											//delta ip noise [µA] (formally: d_IP_Rauschen)
-  float DeltaIpLayerEnd;																									//delta ip layer end [%] (formally: d_IP_Schichtende)
-  float DeltaIpLimitRawTrim;																							//delta ip raw limit [%] (formally: d_IP_soll_grob)
-  float DeltaIpLimitFineTrim;																							//delta ip fine limit [%] (formally: d_IP_soll_fein)
-  float InterpolationFactorRawTrim;																				//interpolation factor raw trimming [1] (formally: Faktor_grob)
-  float InterpolationFactorFineTrim;																			//interpolation factor fine trimming [1] (formally: Faktor_fein)
-  float FaktorCRawTrim;																										//c-factor raw trimming [1] (formally: Faktor_C_grob)
-  float FaktorCFineTrim;																									//c-factor fine trimming [1] (formally: Faktor_C_fein)
-  unsigned int Linear1X;																									//linear or 1/x function (0=linear;1=1/x) (formally: _Linear_1_X)
-  float EndTestUpperTolarance;																						//end test upper tolerance [%] (formally: Upper_Tol_Endtest)
-  float EndTestLowerTolarance;																						//end test lower tolerance [%] (formally: Lower_Tol_Endtest)
-  float DeltaIpLayerEndScrap;																							//delta ip layer end scrap [%] (formally: d_IP_Schichtende_Ausschuss)
-  unsigned int CheckMaxCountCrossingReached;															//check of max crossing count [1] (formally: CheckMaxCountCrossingReached)
-  float MinCutDistance;																										//min. cut distance [mm] (formally: Diff_min_X)
-  unsigned int AdditionalCutsNumber;																			//number of additional cuts [1] (formally: AdditionalCutsNumber)
-  float MinDistanceToEdgeForAdditionalCuts;																//min. distance to edge for additional cuts [mm] (formally: MinimalDistanceToEdgeForAdditionalCuts)
-  float MinDeviationRawTrim;																							//min. deviation raw trimming [%] (formally: MinimalDeviation)
-  int MinPassageLastCut;																					        //min. crossing count at all cuts except last cut fine trimming [1] (formally: MinCrossingsLastCutCoarse)
-  unsigned int DeepCutsFineTrim;																					//deep cuts at fine trimming (formally: DeepCutsDuringFineTrim)
-  float DeltaIpLastFineTrim;																							//delta ip last fin trimming [%] (formally: d_IP_Last_fein)
-  int MinPassageFineTrim;																									//min. passage fine trimming (formally: _min_Ueberfahrten_fein)
-  unsigned int ProcessTimeout;																						//process timeout (entire action)
-  unsigned int CutDirectionAlternating;                                   //cut direction alternating (0=off,1=on)
-  unsigned int CoolingType;																								//cooling type (0=off,1=time,2=rhh)
-  int CoolingTimePassive;                                                 //cooling time passive
-  int CoolingTimeActive;                                                  //cooling time active
-  float CoolingRhhPasssive;																								//rhh value for cooling passive
-  float CoolingRhhActive;																									//rhh value for cooling active
-  int CoolingTimeoutRhhPasssive;																				  //cooling timeout for cooling passive
-  int CoolingTimeoutRhhActive;																					  //cooling timeout for cooling active
-  int Labeling;																														//labeling (0=off,1=on)
+  float IpSetpoint;			//ip setpoint [µA] (formally: IP_soll)
+  float	MinIpForTrimming;      //min. ip for trimming [µA]
+  unsigned int MaxPassage;		//max passage [1] (formally: _max_Schnitte)
+  float DeltaIpNoise;		//delta ip noise [µA] (formally: d_IP_Rauschen)
+  float DeltaIpLayerEnd;	//delta ip layer end [%] (formally: d_IP_Schichtende)
+  float DeltaIpLimitRawTrim;	//delta ip raw limit [%] (formally: d_IP_soll_grob)
+  float DeltaIpLimitFineTrim;	//delta ip fine limit [%] (formally: d_IP_soll_fein)
+  float InterpolationFactorRawTrim;	//interpolation factor raw trimming [1] (formally: Faktor_grob)
+  float InterpolationFactorFineTrim;	//interpolation factor fine trimming [1] (formally: Faktor_fein)
+  float FaktorCRawTrim;		//c-factor raw trimming [1] (formally: Faktor_C_grob)
+  float FaktorCFineTrim;	//c-factor fine trimming [1] (formally: Faktor_C_fein)
+  unsigned int Linear1X;	//linear or 1/x function (0=linear;1=1/x) (formally: _Linear_1_X)
+  float EndTestUpperTolarance;	//end test upper tolerance [%] (formally: Upper_Tol_Endtest)
+  float EndTestLowerTolarance;	//end test lower tolerance [%] (formally: Lower_Tol_Endtest)
+  float DeltaIpLayerEndScrap;	//delta ip layer end scrap [%] (formally: d_IP_Schichtende_Ausschuss)
+  unsigned int CheckMaxCountCrossingReached;//check of max crossing count [1] (formally: CheckMaxCountCrossingReached)
+  float MinCutDistance;			//min. cut distance [mm] (formally: Diff_min_X)
+  unsigned int AdditionalCutsNumber;	//number of additional cuts [1] (formally: AdditionalCutsNumber)
+  float MinDistanceToEdgeForAdditionalCuts;	//min. distance to edge for additional cuts [mm] (formally: MinimalDistanceToEdgeForAdditionalCuts)
+  float MinDeviationRawTrim;				//min. deviation raw trimming [%] (formally: MinimalDeviation)
+  int MinPassageLastCut;					//min. crossing count at all cuts except last cut fine trimming [1] (formally: MinCrossingsLastCutCoarse)
+  unsigned int DeepCutsFineTrim;			//deep cuts at fine trimming (formally: DeepCutsDuringFineTrim)
+  float DeltaIpLastFineTrim;				//delta ip last fin trimming [%] (formally: d_IP_Last_fein)
+  int MinPassageFineTrim;					//min. passage fine trimming (formally: _min_Ueberfahrten_fein)
+  unsigned int ProcessTimeout;				//process timeout (entire action)
+  unsigned int CutDirectionAlternating;     //cut direction alternating (0=off,1=on)
+  unsigned int CoolingType;		//cooling type (0=off,1=time,2=rhh)
+  int CoolingTimePassive;       //cooling time passive
+  int CoolingTimeActive;        //cooling time active
+  float CoolingRhhPasssive;		//rhh value for cooling passive
+  float CoolingRhhActive;		//rhh value for cooling active
+  int CoolingTimeoutRhhPasssive;//cooling timeout for cooling passive
+  int CoolingTimeoutRhhActive;	//cooling timeout for cooling active
+  int Labeling;		//labeling (0=off,1=on)
 };
 
 //laser data
@@ -475,34 +475,34 @@ struct ParamDataUnNormal
 //parameter universal normal
 struct ParamDataUniversalNormal
 {
-  float UlSetpoint;																												//ul setpoint
-  float IgrkUpNSetpoint;																									//igrk upn setpoint	  
-  float RidcnHeaterVoltageSetpoint;																				//ridcn heater voltage 
-  float RidcnUpNSetpoint;																									//ridcn upn setpoint
-  float IpreHeaterVoltageSetpoint;																				//ipre heater voltage setpoint
-  float IpreIpNSetpoint;																									//ipre ipn setpoint
-  float RiacHeaterVoltageSetpoint;																				//riac heater voltage setpoint
+  float UlSetpoint;		//ul setpoint
+  float IgrkUpNSetpoint;		//igrk upn setpoint	  
+  float RidcnHeaterVoltageSetpoint;		//ridcn heater voltage 
+  float RidcnUpNSetpoint;	//ridcn upn setpoint
+  float IpreHeaterVoltageSetpoint;	//ipre heater voltage setpoint
+  float IpreIpNSetpoint;			//ipre ipn setpoint
+  float RiacHeaterVoltageSetpoint;	//riac heater voltage setpoint
 
-  CheckType ChkIl;																												//check il
+  CheckType ChkIl;	//check il
 
-  CheckType ChkRiacStat;																									//check riac stat
+  CheckType ChkRiacStat;	//check riac stat
 
-  CheckType ChkRiac;																											//check riac
+  CheckType ChkRiac;		//check riac
   
-  CheckType ChkRidc;																											//check ridc
+  CheckType ChkRidc;	//check ridc
 
-  CheckType ChkIgrk;																											//check igrk
+  CheckType ChkIgrk;	//check igrk
 
-  CheckType ChkIpre;																											//check ipre
+  CheckType ChkIpre;	//check ipre
 };
 
 //parameter ip normal
 struct ParamDataIpNormal
 {
-  float HeaterVoltageSetpoint;																						//heater voltage setpoint [V]
-  float IpPumpVoltageSetpoint;																						//pump voltage setpoint
-  CheckType ChkUp;																												//check up
-  CheckType ChkIp;																												//check ip
+  float HeaterVoltageSetpoint;		//heater voltage setpoint [V]
+  float IpPumpVoltageSetpoint;		//pump voltage setpoint
+  CheckType ChkUp;//check up
+  CheckType ChkIp;//check ip
 };
 
 //parameter ilm normal
@@ -534,12 +534,12 @@ struct ParamDataIlmNormal
 //parameter data normal measure
 struct ParamDataNormalMeasure
 {
-  ParamDataPositionNormal ParamPositionNormal;														//position normal
-  ParamDataHeaterNormal	ParamHeaterNormal;																//heater normal
-  ParamDataUnNormal ParamUnNormal;																				//un normal
-  ParamDataUniversalNormal ParamUniversalNormal;													//universal normal
-  ParamDataIpNormal	ParamIpNormal;																				//ip normal
-  ParamDataIlmNormal ParamIlmNormal;																			//ilm normal
+  ParamDataPositionNormal ParamPositionNormal;	//position normal
+  ParamDataHeaterNormal	ParamHeaterNormal;		//heater normal
+  ParamDataUnNormal ParamUnNormal;				//un normal
+  ParamDataUniversalNormal ParamUniversalNormal;	//universal normal
+  ParamDataIpNormal	ParamIpNormal;					//ip normal
+  ParamDataIlmNormal ParamIlmNormal;				//ilm normal
 };
 
 //assembly data common 
@@ -958,33 +958,33 @@ public:
   ~SEComPlc();																										        //destructor
   int Initializing( void );		  																					//initialization
   ParamStationDataTrimmingChamber GetParamStationDataTrimming( void );		//get trimming parameter data
-  ParamDataTrimmingChamber GetParamDataTrimming( void );									//get trimming parameter data
-  ParamDataNormalMeasure GetParamDataNormalMeasure( void ); 							//get normal measure data
-  ParamDataScannerMoveAbs GetParamDataMoveAbs( void );										//get parameter scanner move abolute
-  ParamDataScannerTrimmingCut GetParamDataTrimmingCut( void );						//get parameter data scanner trimming cut 
-  ParamDataImageProcessing GetParamDataImageProcessing( void );						//get parameter image processing
-  ParamDataScannerLaserPoint GetParamDataLaserPoint( void );							//get parameter data scanner laser point
-  ParamDataScannerWriteText GetParamDataWriteText( void );								//get parameter data scanner write text
-  float GetParamDataAdjustPollute( void );																//get parameter adjust pollute
-  unsigned int GetNormalNumber( void );																		//get normal number
-  AssemblyDataTrimmingChamber GetAssemblyData( void );										//get assembly data
+  ParamDataTrimmingChamber GetParamDataTrimming( void );		//get trimming parameter data
+  ParamDataNormalMeasure GetParamDataNormalMeasure( void ); 	//get normal measure data
+  ParamDataScannerMoveAbs GetParamDataMoveAbs( void );			//get parameter scanner move abolute
+  ParamDataScannerTrimmingCut GetParamDataTrimmingCut( void );	//get parameter data scanner trimming cut 
+  ParamDataImageProcessing GetParamDataImageProcessing( void );	//get parameter image processing
+  ParamDataScannerLaserPoint GetParamDataLaserPoint( void );	//get parameter data scanner laser point
+  ParamDataScannerWriteText GetParamDataWriteText( void );		//get parameter data scanner write text
+  float GetParamDataAdjustPollute( void );	//get parameter adjust pollute
+  unsigned int GetNormalNumber( void );		//get normal number
+  AssemblyDataTrimmingChamber GetAssemblyData( void );	//get assembly data
 
-  ResultDataTrimming * GetResultDataTrimmingAddress( void );							//get address result data trimming
+  ResultDataTrimming * GetResultDataTrimmingAddress( void );//get address result data trimming
   ResultDataPositionNormal * GetResultDataPositionNormalAddress( void );	//get address result data position normal
-  ResultDataHeaterNormal * GetResultDataHeaterNormalAddress( void );			//get address result data heater normal
+  ResultDataHeaterNormal * GetResultDataHeaterNormalAddress( void );	//get address result data heater normal
   ResultDataUniversalNormal * GetResultDataUniversalNormalAddress( void );//get address result data universal normal
-  ResultDataUnNormal * GetResultDataUnNormalAddress( void );							//get address result data un normal
-  ResultDataIpNormal * GetResultDataIpNormalAddress( void );							//get address result data ip normal
-  ResultDataIlmNormal * GetResultDataIlmNormalAddress( void );						//get address result data ilm normal
+  ResultDataUnNormal * GetResultDataUnNormalAddress( void );	//get address result data un normal
+  ResultDataIpNormal * GetResultDataIpNormalAddress( void );	//get address result data ip normal
+  ResultDataIlmNormal * GetResultDataIlmNormalAddress( void );	//get address result data ilm normal
 
-  CyclicDataTrimming * GetCyclicDataTrimmingAddress( void );							//get address result data cyclical
+  CyclicDataTrimming * GetCyclicDataTrimmingAddress( void );	//get address result data cyclical
 
-  unsigned int * GetChamberStateAddress( void );													//get address chamber state
+  unsigned int * GetChamberStateAddress( void );	//get address chamber state
 
-	float * GetIpRefValuesAddress( void );					      							  	//get address chamber state
+	float * GetIpRefValuesAddress( void );	  	//get address chamber state
 
-  int Connect( void );																										//connect to plc
-  int Disconnect( void );																									//disconnect from plc
+  int Connect( void );		//connect to plc
+  int Disconnect( void );	//disconnect from plc
 
   static HANDLE hThreadHandleComPlc[CHAMBER_COUNT];												//thread handle
 

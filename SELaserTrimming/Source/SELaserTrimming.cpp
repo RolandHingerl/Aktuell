@@ -14,8 +14,12 @@
 #include "SELaserTrimming.h"
 #include "SETrimmingChamber.h"
 #include "SEComPlc.h"
+#if 0
 #include "..\Library\SETestDLL.h"
-
+#else
+#include "..\Library\LSTestDLL.h"
+#include "..\Library\MCDataEx.h"
+#endif
 HANDLE hThreadHandleAction[2][32] = { { NULL, 
 																				NULL, 
 																				NULL, 
@@ -189,9 +193,9 @@ LONG MeasInFastTrimmingCellChamber1( WORD wFUIdx,WORD wPartIdx,/*eIMTBasTypes*/i
  *-------------------------------------------------------------------------------------------------------------------------*/
 void MeasInTrimmingCellChamber1( void )
 {
-	int RetVal = 0;																												 	//return value
-	TFLWRESULT tTFlwResult; 																								//flow result
-	LONG lMainIndex, lSubIndex, lLocIdx;																		//split index
+	int RetVal = 0;			//return value
+	TFLWRESULT tTFlwResult; //flow result
+	LONG lMainIndex, lSubIndex, lLocIdx; //split index
 
 	//endless loop (thread)
 	do
@@ -211,14 +215,14 @@ void MeasInTrimmingCellChamber1( void )
 				//check ok
 				if( RetVal == 0 )
 				{
-					if( ( lMainIndex != AdvRiAC && lMainIndex != AdvIPu && lMainIndex != AdvRHh && lMainIndex != AdvPH ) || lSubIndex == 1 || lSubIndex == 2 || lSubIndex == 3 )
+					if( ( lMainIndex != IMT_RiAC && lMainIndex != IMT_IPu && lMainIndex != IMT_RHh && lMainIndex != IMT_PH) || lSubIndex == 1 || lSubIndex == 2 || lSubIndex == 3 )
 					{
 						//repeat over all tiepoints (running variable i)
 						for( int i = 0; i < CELL_TIEPOINT_COUNT; i++ )
 						{
 							if( ( lSubIndex != 1 ) &&
-									( lSubIndex != 2 ) &&
-									( lSubIndex != 3 ) )
+								( lSubIndex != 2 ) &&
+								( lSubIndex != 3 ) )
 							{
 								lSubIndex = 0;
 							}
@@ -398,7 +402,7 @@ void MeasInTrimmingCellChamber2( void )
 				//check ok
 				if( RetVal == 0 )
 				{
-					if( ( lMainIndex != AdvRiAC && lMainIndex != AdvIPu && lMainIndex != AdvRHh && lMainIndex != AdvPH ) || lSubIndex == 1 || lSubIndex == 2 || lSubIndex == 3 )
+					if( ( lMainIndex != IMT_RiAC && lMainIndex != IMT_IPu && lMainIndex != IMT_RHh && lMainIndex != IMT_PH) || lSubIndex == 1 || lSubIndex == 2 || lSubIndex == 3 )
 					{
 						//repeat over all tiepoints (running variable i)
 						for( int i = 0; i < CELL_TIEPOINT_COUNT; i++ )
@@ -1936,25 +1940,24 @@ int _tmain(int argc, _TCHAR* argv[])
 		dprintfInitialize(TRUE, TRUE, "OpConServicesLogfile.txt", 10000000);	//init dprintf
 	#endif
 
-	setlocale( LC_ALL, "German" );																					//set locale to germany
+	setlocale( LC_ALL, "German" );	//set locale to germany
 
 	FileVersionGet( TempString, sizeof( TempString ), "SELaserTrimming.exe");
 
-	printf( "---------------------------------\n" );									      //output version string
-	printf( "SELasertrimming Version: V%s\n", TempString );									//output version string
-	printf( "---------------------------------\n" );									      //output version string
+	printf( "---------------------------------\n" );		//output version string
+	printf( "SELasertrimming Version: V%s\n", TempString );	//output version string
+	printf( "---------------------------------\n" );		//output version string
 
 	if( hThreadDeleteStatistics == NULL) 
 	{
 			DWORD dwThreadId, dwThrdParam;
 			//create thread
 			//no security, default stack size, default creation
-			hThreadDeleteStatistics = CreateThread( NULL,		
-																							0,                       
-																							(LPTHREAD_START_ROUTINE)HandleCheckStatisticDelete,             
-																							&dwThrdParam,               
-																							0,                         
-																							&dwThreadId);
+			hThreadDeleteStatistics = CreateThread( NULL, 0,                       
+				                                 	(LPTHREAD_START_ROUTINE)HandleCheckStatisticDelete,             
+													&dwThrdParam,               
+													0,                         
+													&dwThreadId );
 	}	
 	
 	ComPlc[CHAMBER1] = new SEComPlc(1);																			//create plc communication for chamber 1
@@ -1990,7 +1993,8 @@ int _tmain(int argc, _TCHAR* argv[])
 	#ifndef CHAMBER2_DISABLE
 	printf( "Chamber[2]:Main:Waiting for plc connection...\n" );
 	ComPlc[CHAMBER2]->Initializing( );																			//plc communication init
-	#ifndef PLC_SIMULATION
+	#ifndef PLC_
+
 	while( ComPlc[CHAMBER2]->Connect() != 0 )																//plc communication connect
 	{
 		Sleep( 1000 );																												//wait 1s
@@ -2008,20 +2012,20 @@ int _tmain(int argc, _TCHAR* argv[])
 	{
 		if( SETrimmChamber[CHAMBER1]->ParameterReadyToStart() == false )			  //check all cells ready
 			{
-				if( RetryCount == 60 )																							//check timeout 60s reached
+				if( RetryCount == 60 )	//check timeout 60s reached
 				{
 					ComPlc[CHAMBER1]->SetErrorCode( GLOBAL_ERROR, FLT_NO_PARAMETER_DATA ); //set error code
-					RetryCount = 0;																										//init retry count
+					RetryCount = 0;	 //init retry count
 					printf( "Chamber[1]:Main:Error no parameter data after 60s!\n" );
 				}
-				RetVal = -1;																												//set retval to error
-				RetryCount++;																												//increment retry count
-				Sleep( 1000 );																											//wait 1s
+				RetVal = -1;	//set retval to error
+				RetryCount++;	//increment retry count
+				Sleep( 1000 );	//wait 1s
 			}										
 			else
 			{
-				RetVal = 0;																													//set retval to ok
-			}																										//wait 1s
+				RetVal = 0;	//set retval to ok
+			}		//wait 1s
 	}
 	while( RetVal != 0 );
 	printf("Chamber[1]:Main:Plc data present!\n");

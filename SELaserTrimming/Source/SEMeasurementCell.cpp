@@ -22,7 +22,12 @@
 #define _SE_MEASUREMENT_CELL_INTERNAL
 #include "SEMeasurementCell.h"
 #undef _SE_MEASUREMENT_CELL_INTERNAL
+#if 0
 #include "..\Library\SETestDLL.h"
+#else
+#include "..\Library\LSTestDLL.h"
+#include "..\Library\MCDataEx.h"
+#endif
 
 //thread handle of each measurement cell
 HANDLE SEMeasurementCell::hThreadMeasInMeasurementCellChamber[CELL_COUNT] = { NULL, NULL, NULL, NULL };
@@ -198,30 +203,30 @@ int SEMeasurementCell::ClearAllValues( void )
  *                                                                                                                         *
  * description:         : This is the function to clear all measured and stored values at one tiepoint and type.           *
  *-------------------------------------------------------------------------------------------------------------------------*/
-int SEMeasurementCell::ClearValues(int Tiepoint, AdvBaseTypes Type)
+int SEMeasurementCell::ClearValues(int Tiepoint, eIMTBasTypes eImtType)
 {
 	int RetVal = 0;
 	
-	switch(Type)
+	switch(eImtType)
 	{
-		case AdvRiAC:
+		case IMT_RiAC:
 			RiValues[Tiepoint - 1].clear();
 			break;
 			
-		case AdvIPu:
+		case IMT_IPu:
 			IpValues[Tiepoint - 1].clear();
 			break;
 		
-		case AdvRHh:
+		case IMT_RHh:
 			RhhValues[Tiepoint - 1].clear();
 			break;
 		
-		case AdvPH:
+		case IMT_PH:
 			PhValues[Tiepoint - 1].clear();
 	break;
 	
 	default:
-		printf( "Cell[%d]:SEMeasurementCell::ClearValues - requested value not present ( type = %d )!\n", CellId, Type );
+		printf( "Cell[%d]:SEMeasurementCell::ClearValues - requested value not present ( type = %d )!\n", CellId, eImtType );
 		RetVal = -1;
 		break;
 	} 
@@ -241,17 +246,17 @@ int SEMeasurementCell::ClearValues(int Tiepoint, AdvBaseTypes Type)
  *                                                                                                                         *
  * description:         : This is the function to store one measured value.                                                *
  *-------------------------------------------------------------------------------------------------------------------------*/
-int SEMeasurementCell::AddValue(int Tiepoint, AdvBaseTypes Type, int Index, SEValueInfo Value)
+int SEMeasurementCell::AddValue(int Tiepoint, eIMTBasTypes eImtType, int Index, SEValueInfo Value)
 {
 	int RetVal = 0;
 	std::vector <SEValueInfo>::iterator Iter;
 	 
-	switch(Type)
+	switch(eImtType)
 	{
-		case AdvTemp:
+		case IMT_Temp:
 			TemperatureValues[Tiepoint -1] = Value;
 			break;
-		case AdvRiAC:
+		case IMT_RiAC:
 			switch( Index )
 			{
 				case 0:
@@ -273,7 +278,7 @@ int SEMeasurementCell::AddValue(int Tiepoint, AdvBaseTypes Type, int Index, SEVa
 			}
 			break;
 			
-		case AdvIPu:
+		case IMT_IPu:
 			switch( Index )
 			{
 				case 0:
@@ -306,63 +311,63 @@ int SEMeasurementCell::AddValue(int Tiepoint, AdvBaseTypes Type, int Index, SEVa
 
 			break;
 		
-		case AdvRHh:
+		case IMT_RHh:
 			//Iter = RhhValues[Tiepoint - 1].end();
 			//RhhValues[Tiepoint - 1].insert( Iter, Value );
 			RhhValues[Tiepoint - 1].push_back( Value );
 			break;
 		
-		case AdvPH:
+		case IMT_PH:
 			//Iter = PhValues[Tiepoint - 1].end(); 
 			//PhValues[Tiepoint - 1].insert( Iter, Value );
 			PhValues[Tiepoint - 1].push_back( Value );
 			break;
 
-		case AdvUHS:
+		case IMT_UHS:
 			UhValues[Tiepoint - 1] = Value;
 			break;
 
-		case AdvUHmin:
+		case IMT_UHmin:
 			UhMinValues[Tiepoint - 1] = Value;
 			break;
 
-		case AdvUHmax:
+		case IMT_UHmax:
 			UhMaxValues[Tiepoint - 1] = Value;
 			break;
 
-		case AdvRHk:
+		case IMT_RHk:
 			RhkValues[Tiepoint - 1] = Value;
 			break;
 
-		case AdvEH:
+		case IMT_EH:
 			EhValues[Tiepoint - 1] = Value;
 			break;
 
-		case AdvdtRiReg:
+		case IMT_dtRiReg:
 			RiRegValues[Tiepoint - 1] = Value;
 			break;
 
-		case AdvdRHdt:
+		case IMT_dRHdt:
 			RhDtValues[Tiepoint - 1] = Value;
 			break;
 
-		case AdvdIHdt:
+		case IMT_dIHdt:
 			IhDtValues[Tiepoint - 1] = Value;
 			break;
 
-		case AdvHSCont:
+		case IMT_HSCONT:
 			HSContValues[Tiepoint - 1] = Value;
 			break;
 
-		case AdvSSCont:
+		case IMT_SSCONT:
 			SSContValues[Tiepoint - 1] = Value;
 			break;
 
-		case AdvIH:
+		case IMT_IH:
 			IhValues[Tiepoint - 1] = Value;
 			break;
 
-		case AdvUAPE:
+		case IMT_UAPE:
 			switch( Index )
 			{
 				case 0:
@@ -381,7 +386,7 @@ int SEMeasurementCell::AddValue(int Tiepoint, AdvBaseTypes Type, int Index, SEVa
 
 			break;
 
-		case AdvUN:
+		case IMT_UN:
 			switch( Index )
 			{
 				case 0:
@@ -404,32 +409,32 @@ int SEMeasurementCell::AddValue(int Tiepoint, AdvBaseTypes Type, int Index, SEVa
 
 			break;
 
-		case AdvIpRE:
+		case IMT_IpRE:
 			IpReValues[Tiepoint - 1] = Value;
 			break;
 
-		case AdvURE:
+		case IMT_URE:
 			UReValues[Tiepoint - 1] = Value;
 			break;
 
-		case AdvIgRK:
+		case IMT_IgRK:
 			IgRkValues[Tiepoint - 1] = Value;
 			break;
 
-		case AdvIL:
+		case IMT_IL:
 			IlValues[Tiepoint - 1] = Value;
 			break;
 
-		case AdvRiDCn:
+		case IMT_RiDCn:
 			RiDCnValues[Tiepoint - 1] = Value;
 			break;
 
-		case AdvIPr:
+		case IMT_IPr:
 			IprValues[Tiepoint - 1] = Value;
 			break;
 
 		default:
-			printf( "Cell[%d]:SEMeasurementCell::AddValue - measured value not stored\r ( type = %d, value = %f)!\n", CellId, Type, Value.Value );
+			printf( "Cell[%d]:SEMeasurementCell::AddValue - measured value not stored\r ( type = %d, value = %f)!\n", CellId, eImtType, Value.Value );
 			RetVal = -1;
 			break;
 	} 
@@ -450,19 +455,19 @@ int SEMeasurementCell::AddValue(int Tiepoint, AdvBaseTypes Type, int Index, SEVa
  *                                                                                                                         *
  * description:         : This is the function to get the last measured value.                                             *
  *-------------------------------------------------------------------------------------------------------------------------*/
-int SEMeasurementCell::GetLastValue( int Tiepoint, AdvBaseTypes Type, int Index, SEValueInfo * Value )
+int SEMeasurementCell::GetLastValue( int Tiepoint, eIMTBasTypes eImtType, int Index, SEValueInfo * Value )
 {
 	int RetVal = 0;
 	
 	memset( Value, 0, sizeof( SEValueInfo ) );
 	//try
 	//{
-	switch(Type)
+	switch(eImtType)
 	{
-		case AdvTemp:
+		case IMT_Temp:
 			*Value = TemperatureValues[Tiepoint - 1];
 			break;
-		case AdvRiAC:
+		case IMT_RiAC:
 			switch( Index )
 			{
 				case 0:
@@ -482,7 +487,7 @@ int SEMeasurementCell::GetLastValue( int Tiepoint, AdvBaseTypes Type, int Index,
 			}
 			break;
 			
-		case AdvIPu:
+		case IMT_IPu:
 			switch( Index )
 			{
 				case 0:
@@ -512,65 +517,65 @@ int SEMeasurementCell::GetLastValue( int Tiepoint, AdvBaseTypes Type, int Index,
 			}
 			break;
 		
-		case AdvRHh:
+		case IMT_RHh:
 			if( RhhValues[Tiepoint - 1].empty() == false )
 			{
 				*Value = RhhValues[Tiepoint - 1].at( RhhValues[Tiepoint - 1].size() - 1 );
 			}
 			break;
 		
-		case AdvPH:
+		case IMT_PH:
 			if( PhValues[Tiepoint - 1].empty() == false )
 			{
 				*Value = PhValues[Tiepoint - 1].at( PhValues[Tiepoint - 1].size() - 1 );
 			}
 		break;
 
-		case AdvUHS:
+		case IMT_UHS:
 			*Value = UhValues[Tiepoint - 1];
 			break;
 
-		case AdvUHmin:
+		case IMT_UHmin:
 			*Value = UhMinValues[Tiepoint - 1];
 			break;
 
-		case AdvUHmax:
+		case IMT_UHmax:
 			*Value = UhMaxValues[Tiepoint - 1];
 			break;
 
-		case AdvRHk:
+		case IMT_RHk:
 			*Value = RhkValues[Tiepoint - 1];
 			break;
 
-		case AdvEH:
+		case IMT_EH:
 			*Value = EhValues[Tiepoint - 1];
 			break;
 
-		case AdvdtRiReg:
+		case IMT_dtRiReg:
 			*Value = RiRegValues[Tiepoint - 1];
 			break;
 
-		case AdvdRHdt:
+		case IMT_dRHdt:
 			*Value = RhDtValues[Tiepoint - 1];
 			break;
 
-		case AdvdIHdt:
+		case IMT_dIHdt:
 			*Value = IhDtValues[Tiepoint - 1];
 			break;
 
-		case AdvHSCont:
+		case IMT_HSCONT:
 			*Value = HSContValues[Tiepoint - 1];
 			break;
 
-		case AdvSSCont:
+		case IMT_SSCONT:
 			*Value = SSContValues[Tiepoint - 1];
 			break;
 
-		case AdvIH:
+		case IMT_IH:
 			*Value = IhValues[Tiepoint - 1];
 			break;
 
-		case AdvUAPE:
+		case IMT_UAPE:
 			switch( Index )
 			{
 				case 0:
@@ -589,7 +594,7 @@ int SEMeasurementCell::GetLastValue( int Tiepoint, AdvBaseTypes Type, int Index,
 
 			break;
 
-		case AdvUN:
+		case IMT_UN:
 			switch( Index )
 			{
 				case 0:
@@ -611,32 +616,32 @@ int SEMeasurementCell::GetLastValue( int Tiepoint, AdvBaseTypes Type, int Index,
 			}
 			break;
 
-		case AdvIpRE:
+		case IMT_IpRE:
 			*Value = IpReValues[Tiepoint - 1];
 			break;
 
-		case AdvURE:
+		case IMT_URE:
 			*Value = UReValues[Tiepoint - 1];
 			break;
 
-		case AdvIgRK:
+		case IMT_IgRK:
 			*Value = IgRkValues[Tiepoint - 1];
 			break;
 
-		case AdvIL:
+		case IMT_IL:
 			*Value = IlValues[Tiepoint - 1];
 			break;
 
-		case AdvRiDCn:
+		case IMT_RiDCn:
 			*Value = RiDCnValues[Tiepoint - 1];
 			break;
 
-		case AdvIPr:
+		case IMT_IPr:
 			*Value = IprValues[Tiepoint - 1];
 			break;
 
 		default:
-			printf( "Cell[%d]:SEMeasurementCell::GetLastValue - requested value not present ( type = %d )!\n", CellId, Type );
+			printf( "Cell[%d]:SEMeasurementCell::GetLastValue - requested value not present ( type = %d )!\n", CellId, eImtType );
 			RetVal = -1;
 			break;
 	} 
@@ -756,7 +761,7 @@ int SEMeasurementCell::StopSequence(void)
 	AvgCardTemperature = 0.0f;
 	for( int i = 0; i < CELL_TIEPOINT_COUNT; i++ )
 	{
-		GetLastValue( i + 1, AdvTemp, 0, &Value );
+		GetLastValue( i + 1, IMT_Temp, 0, &Value );
 		if( _isnan( Value.Value )	== 0 )
 		{
 			if( Value.Value > 1.0f )
@@ -806,7 +811,7 @@ bool SEMeasurementCell::IsRiStable( int Tiepoint )
 	int FuncRetVal = 0;
 	SEValueInfo Value;
 
-	FuncRetVal = GetLastValue( Tiepoint, AdvRiAC, 0, &Value );
+	FuncRetVal = GetLastValue( Tiepoint, IMT_RiAC, 0, &Value );
 
 	if( ProcessTypeLocal == MeasureSelection )
 	{
@@ -847,13 +852,13 @@ bool SEMeasurementCell::IsContactingOk( int Tiepoint )
 	int FuncRetVal = 0;
 	SEValueInfo Value;
 
-	FuncRetVal = GetLastValue(Tiepoint, AdvHSCont, 0, &Value );
+	FuncRetVal = GetLastValue(Tiepoint, IMT_HSCONT, 0, &Value );
 
 	if( ( FuncRetVal == 0 ) &&
 			( Value.ReceiveTimePC != 0 ) &&
 			( Value.Value == 0.0 ) )
 	{
-		FuncRetVal = GetLastValue(Tiepoint, AdvSSCont, 0, &Value );
+		FuncRetVal = GetLastValue(Tiepoint, IMT_HSCONT, 0, &Value );
 
 		if( ( FuncRetVal == 0 ) &&
 				( Value.ReceiveTimePC != 0 ) &&
@@ -872,8 +877,8 @@ bool SEMeasurementCell::IsContactingOk( int Tiepoint )
  * input:               : void                                                                                             *
  *                                                                                                                         *
  * output:              : bool : all cards status                                                                          *
- *                                false : not all cards ready                                                              *
- *                                true : all cards ready                                                                   *
+ *                               false : not all cards ready                                                              *
+ *                               true : all cards ready                                                                   *
  *                                                                                                                         *
  * description:         : This is the function to check advov cards ready.                                                 *
  *-------------------------------------------------------------------------------------------------------------------------*/
@@ -937,18 +942,18 @@ bool SEMeasurementCell::DeinstallThreadRequested( void )
  *                        callback function).                                                                              *
  *-------------------------------------------------------------------------------------------------------------------------*/
 int SEMeasurementCell::HandleTestSequenceValues(WORD wFUIdx,WORD wPartIdx,/*eIMTBasTypes*/int eMainType, int SubIndex,
-																								float rMVal,float tsMTime,LONG lResIdx)
+												float rMVal,float tsMTime,LONG lResIdx)
 {	
 	int RetVal = 0;
-	SEValueInfo Value;																											//measured values
+	SEValueInfo Value;	//measured values
 	
-	Value.ReceiveTime	= (__int64)tsMTime;															      //store receive time from ADVOV card [ms]
-	Value.ReceiveTimePC = GetActualSystemTimeMs( );	                        //store receive time [ms]		
-	Value.Value = rMVal;																										//store measured value
+	Value.ReceiveTime	= (__int64)tsMTime;	 //store receive time from ADVOV card [ms]
+	Value.ReceiveTimePC = GetActualSystemTimeMs( );	 //store receive time [ms]		
+	Value.Value = rMVal;	//store measured value
 	
-	AddValue(wPartIdx + 1, (AdvBaseTypes)eMainType , SubIndex, Value);
+	AddValue(wPartIdx + 1, (eIMTBasTypes)eMainType , SubIndex, Value);
 	#ifdef _DEBUG
-	if( /*wPartIdx == 0 &&*/ eMainType == AdvIPu && ( rMVal * 1.0e6f ) < 50.0f && abs( rMVal * 1.0e6f ) > 1.0f )
+	if( /*wPartIdx == 0 &&*/ eMainType == IMT_IPu && ( rMVal * 1.0e6f ) < 50.0f && abs( rMVal * 1.0e6f ) > 1.0f )
 	{
 		printf("Cell[%d]:Error In: Ip<50: Value=%f\n", CellId, rMVal*1.0e6f);
 		//printf("Idx=%d, CellId=%d, Wert=%f, MCTime=%lld, SysTime=%lld\n",wPartIdx,CellId,Value.Value, Value.ReceiveTime , Value.ReceiveTimePC);
@@ -959,7 +964,6 @@ int SEMeasurementCell::HandleTestSequenceValues(WORD wFUIdx,WORD wPartIdx,/*eIMT
 		printf("CellId=%d, Wert=%f, MCTime=%lld, SysTime=%lld\n",CellId,Value.Value, Value.ReceiveTime , Value.ReceiveTimePC);
 	}*/	
 
-	
 	return 0;
 }
 
@@ -1110,8 +1114,7 @@ int SETrimmingCell::GenerateTestSequence( TestSequenceParam Parameter )
 	TFlwHeaterPowIn( LSTestHandle, TestTime, 900 );           							//measure heater power
 	TFlwCycMeasPrefix2( LSTestHandle, 0, 1.0, -1, Parameter.LowPassConst ); //prepare cyclic measurement
 	TFlwHeaterHotResIn( LSTestHandle, TestTime, 900 );     									//measure heater hot resistance
-
-	
+		
 	HeatingEndTime = 0.0;
 
 	if( Parameter.MeasureFLO < 0.5 )
@@ -1213,6 +1216,218 @@ int SETrimmingCell::GenerateTestSequence( TestSequenceParam Parameter )
 	return 0;
 }	
 
+
+int SEReferenceCell::GenerateTestSequence_Ip4UNernstControl(TestSequenceParam Parameter)
+{
+	int iRet = 0;
+
+	float fMeasTime = 1.0f;
+	// Kontaktierüberprüfung heizerseitig
+	TFlwContChkHS(LSTestHandle, fMeasTime, 0);
+
+	fMeasTime += 2.0f;
+
+	float fStartRiSupv = 14.0f;
+	// "6.1 Bedingungen bei der Funktionsprüfung" :
+	// Ri,Target (307 ± 4) Ohm
+	float fRiACTolerance = 4.0f;
+	float fRiTarget = 307.0f; //Kp 0,06 Ki: 7 Kd 0 Ta 0,1s bei Zielwert 307 Ohm.
+	float fRiSnapHigh = 325.0f;
+	/* Leistung, mit der geheizt wird, wenn der Ri-Regler nach #fSnapInTime nicht funktioniert */
+	float fMaxSnapInTime = 10.0f;
+	/* maximale Zeit bis Regler gestartet sein muss */
+	float fPowerWhenFail = 11.0f;
+	// Ri Regler mit 12V UH Regelung am Anfang bis RiAC unter #fRiSnapHigh
+	// Messung Ri mit 158 µA statt bisher mit 500µA
+	TFlwRiPIDSnapRegSet3(LSTestHandle, fMeasTime, RIREGFL_OLDRHK | RIREGFL_RegUH | RIREGFL_NOUHMAXLIM | RIREGFL_NOUHSTARTLIM | RIREGFL_RISNAPLASTUH/* Flags */,
+		12.0f,
+		fPowerWhenFail,
+		fMaxSnapInTime,
+		0.0f, fRiSnapHigh, fRiTarget, 0, 0, 0.158e-3f/**//*0.5e-3f*/, 3000.0f, 50e-6f, 12.3f /*14.0f*/,
+		0.06f, 7.0f, 0.0f, 0.1f);
+
+	// RiAC zyklisch für Anzeige
+	TFlwCycMeasPrefix(LSTestHandle, 0x0, 1.0f, -1);
+	TFlwRiACInExt(LSTestHandle, fMeasTime, 0.158e-3f, 3000.0f, 50e-6f, 950);
+
+	// RiAC Überwachung auf +- #fRiACTolerance Ohm ab Start + #fStartRiSupv 
+	TFlwMeasSupvSet(LSTestHandle, fMeasTime + fStartRiSupv, MMWIDX_Ri, fRiTarget - fRiACTolerance, fRiTarget + fRiACTolerance);
+
+	// Nach 6,5 s sensorseitige Kontaktierüberprüfung
+	fMeasTime += 6.5f;
+	// RiAC für Kontaktierüberprüfung sensorseitig
+	TFlwRiACInExt(LSTestHandle, fMeasTime, 0.158e-3f /*0.5e-3f*/, 3000.0f, 50e-6f, 0);
+	// Pumpspannung für Kontaktierüberprüfung sensorseitig
+	TFlwPumpVoltAPESet(LSTestHandle, fMeasTime, 1.2f);
+	fMeasTime += 0.5f;
+	// Pumpstrommessung für Kontaktierüberprüfung sensorseitig
+	TFlwPumpCurrAPEIn(LSTestHandle, fMeasTime, 0);
+
+	// Kontaktierüberprüfung sensorseitig abfragen.
+	// #KONTSEFL_DONTTURNOFF aktivieren, wenn wegen thermischem Gleichgewicht unter den SEs weitergeheizt werden soll
+	TFlwContChkSSExt(LSTestHandle, fMeasTime, 0 | KONTSEFL_DONTTURNOFF /*weiterheizen, wenn Kontakt nio*/, 10.0f, 1200.0f, 10e-6f, 1);
+
+	// Pumpspannung auf erwarteten Endwert der Regelung einstellen
+	TFlwPumpVoltAPESet(LSTestHandle, fMeasTime, 0.9f);
+
+	fMeasTime += 0.1f;
+	// Pumpstrom einstellen
+	// "6.1 Bedingungen bei der Funktionsprüfung" :
+	// IP,ref (20 ± 5)µA
+	TFlwPumpCurrRESet(LSTestHandle, fMeasTime, 20.0e-6f);
+	// UN,Target (450 ± 25)mV
+	float fUNtarget = 0.450f;
+	// UP,max = (1795 ± 5)mV
+	float fUPmax = 1795.0e-3f;
+	float fMeasDelay = 30e-3f; //Mindest-Messverzögerung nach Stellgrößenausgabe
+
+	// PI Regler für UN, stellt Spannung an APE solange nach, bis die Spannung an RE der Zielspannung entspricht
+	TFlwUNPIRegSet(LSTestHandle, fMeasTime, fUNtarget, fUPmax, -0.6f /*-1.0f*/, -0.14f /*-0.28f*/, fMeasDelay, 100e-3f /*50e-3f*/);//
+
+	// Durch zyklische Messung Ip Werte für Stabilitätsüberprüfung bereitstellen, 
+	// Punkt 12 in "7.2 Prozessablauf im Automatikbetrieb"
+	TFlwCycMeasPrefix(LSTestHandle, 0x0, 0.5f, -1);
+	TFlwPumpCurrAPEIn(LSTestHandle, fMeasTime, 910);
+
+	// Zyklische Messwerte für Anzeige 
+	TFlwCycMeasPrefix(LSTestHandle, 0x0, 1.0f, -1);
+	TFlwPumpVoltAPEIn(LSTestHandle, fMeasTime, 920);
+	TFlwCycMeasPrefix(LSTestHandle, 0x0, 1.0f, -1);
+	TFlwPumpVoltREIn(LSTestHandle, fMeasTime, 930);
+
+	// Bei 25s Messung machen, eigentlich müsste man laut FVPV warten, bis alle SEs stabil sind, laut 
+	// "LSU5.2S_selection_MAE_sensor_operation_onepager.pdf" gibt es eine tStart in den Typdaten
+	float ftStart = 25.0f;
+	float ftEnd = ftStart + 1.0f;
+	// Ip und URE ab ftStart bis ftEnd mit 10 Hz messen
+	TFlwMeasAverage2(LSTestHandle, ftStart, 0, IMT_IPu, IMT_URE, ftEnd - ftStart, 10.0f, 2, 3);
+
+	// Ergebnis RiAC Überwachung auslesen für Plausibilitätsprüfung
+	TFlwMeasSupvIn(LSTestHandle, ftEnd, MMWIDX_Ri, 4, 5, 6);
+
+	// Heizerspannung messen für Plausibilitätsprüfung
+	TFlwHeaterVoltIn(LSTestHandle, ftEnd, 7);
+
+	// APE Spannung messen für Plausibiltätsprüfung
+	TFlwPumpVoltAPEIn(LSTestHandle, ftEnd, 8);
+
+	// Übernehmen für Timeoutüberwachung 
+	fMeasTime = ftEnd;
+
+	return (iRet);
+}
+
+
+int SEReferenceCell::GenerateTestSequence_Ip4TwoPointMeasUp( TestSequenceParam Parameter )
+{
+	float fMeasTime = 0.0f;
+	int iRet = 0;
+	// Kontaktierüberprüfung heizerseitig
+	TFlwContChkHS(LSTestHandle, fMeasTime, 0);
+
+	fMeasTime += 2.0f;
+
+	float fStartRiSupv = 14.0f;
+	// "6.1 Bedingungen bei der Funktionsprüfung" :
+	// Ri,Target (307 ± 4) Ohm
+	float fRiACTolerance = 4.0f;
+	float fRiTarget = 307.0f; //Kp 0,06 Ki: 7 Kd 0 Ta 0,1s bei Zielwert 307 Ohm.
+	float fRiSnapHigh = 325.0f;
+	/* Leistung, mit der geheizt wird, wenn der Ri-Regler nach #fSnapInTime nicht funktioniert */
+	float fMaxSnapInTime = 10.0f;
+	/* maximale Zeit bis Regler gestartet sein muss */
+	float fPowerWhenFail = 11.0f;
+	// Ri Regler mit 12V UH Regelung am Anfang bis RiAC unter #fRiSnapHigh
+	// Messung Ri mit 158 µA statt bisher mit 500µA
+	TFlwRiPIDSnapRegSet3(LSTestHandle, fMeasTime, RIREGFL_OLDRHK | RIREGFL_RegUH | RIREGFL_NOUHMAXLIM | RIREGFL_NOUHSTARTLIM | RIREGFL_RISNAPLASTUH/* Flags */,
+		12.0f,
+		fPowerWhenFail,
+		fMaxSnapInTime,
+		0.0f, fRiSnapHigh, fRiTarget, 0, 0, 0.158e-3f/**//*0.5e-3f*/, 3000.0f, 50e-6f, 12.3f /*14.0f*/,
+		0.06f, 7.0f, 0.0f, 0.1f);
+
+	// RiAC zyklisch für Anzeige
+	TFlwCycMeasPrefix(LSTestHandle, 0x0, 1.0f, -1);
+	TFlwRiACInExt(LSTestHandle, fMeasTime, 0.158e-3f, 3000.0f, 50e-6f, 950);
+
+	// RiAC Überwachung auf +- #fRiACTolerance Ohm ab Start + #fStartRiSupv 
+	TFlwMeasSupvSet(LSTestHandle, fMeasTime + fStartRiSupv, MMWIDX_Ri, fRiTarget - fRiACTolerance, fRiTarget + fRiACTolerance);
+
+	fMeasTime += 6.5f;
+	// RiAC für Kontaktierüberprüfung sensorseitig
+	TFlwRiACInExt(LSTestHandle, fMeasTime, 0.158e-3f /*0.5e-3f*/, 3000.0f, 50e-6f, 0);
+	// Pumpspannung für Kontaktierüberprüfung sensorseitig
+	TFlwPumpVoltAPESet(LSTestHandle, fMeasTime, 1.2f);
+	fMeasTime += 0.5f;
+	// Pumpstrommessung für Kontaktierüberprüfung sensorseitig
+	TFlwPumpCurrAPEIn(LSTestHandle, fMeasTime, 0);
+	// Kontaktierüberprüfung sensorseitig abfragen.
+	// #KONTSEFL_DONTTURNOFF aktivieren, wenn wegen thermischem Gleichgewicht weitergeheizt werden soll
+	TFlwContChkSSExt(LSTestHandle, fMeasTime, 0 | KONTSEFL_DONTTURNOFF /*weiterheizen, wenn Kontakt nio*/, 10.0f, 1200.0f, 10e-6f, 1);
+	// Pumpspannung ausschalten
+	TFlwPumpVoltAPESet(LSTestHandle, fMeasTime, 0.0f);
+
+	fMeasTime += 0.1f;
+	// Pumpstrom einstellen
+	// "6.1 Bedingungen bei der Funktionsprüfung" :
+	// IP,ref (20 ± 5)µA
+	TFlwPumpCurrRESet(LSTestHandle, fMeasTime, 20.0e-6f);
+
+	// Up1
+	TFlwPumpVoltAPESet(LSTestHandle, fMeasTime, 0.760f);
+
+	// Warten vor Messungsbeginn
+	fMeasTime += 0.5f;
+
+	// Ip Werte für Stabilitätsüberprüfung, Punkt 12 in "7.2 Prozessablauf im Automatikbetrieb"
+	TFlwCycMeasPrefix(LSTestHandle, 0x0, 0.5f, -1);
+	TFlwPumpCurrAPEIn(LSTestHandle, fMeasTime, 920);
+
+	// Zyklische Messwerte für Anzeige 
+	TFlwCycMeasPrefix(LSTestHandle, 0x0, 1.0f, -1);
+	TFlwPumpVoltAPEIn(LSTestHandle, fMeasTime, 930);
+
+	TFlwCycMeasPrefix(LSTestHandle, 0x0, 1.0f, -1);
+	TFlwPumpVoltREIn(LSTestHandle, fMeasTime, 940);
+
+	// Bei 25s Messung machen, eigentlich müsste man laut FVPV warten, bis alle SEs stabil sind, laut 
+	// "LSU5.2S_selection_MAE_sensor_operation_onepager.pdf" gibt es t1Start und t2Start in den Typdaten
+	float ft1Start = 25.0f;
+	float ft1End = ft1Start + 1.0f;
+
+	// Mittelwert von Ip und UN
+	TFlwMeasAverage2(LSTestHandle, ft1Start, 0, IMT_IPu, IMT_URE, ft1End - ft1Start, 10.0f, 2, 3);
+
+	// Rückmessung UAPE
+	TFlwPumpVoltAPEIn(LSTestHandle, ft1End, 1);
+
+	// Up2 einstellen
+	TFlwPumpVoltAPESet(LSTestHandle, ft1End, 0.940f);
+
+	// Ip ab t2Start bis ft2End messen
+	float ft2Start = ft1End + 2.0f;
+	float ft2End = ft2Start + 1.0f;
+
+	// Mittelwert von Ip und UN
+	TFlwMeasAverage2(LSTestHandle, ft2Start, 0, IMT_IPu, IMT_URE, ft2End - ft2Start, 10.0f, 4, 5);
+
+	float ftEnd = ft2End;
+
+	// Ergebnis RiAC Überwachung auslesen für Plausibilitätsprüfung
+	TFlwMeasSupvIn(LSTestHandle, ftEnd, MMWIDX_Ri, 6, 7, 8);
+
+	// Heizerspannung messen für Plausibilitätsprüfung
+	TFlwHeaterVoltIn(LSTestHandle, ftEnd, 9);
+
+	// APE Spannung messen für Plausibiltätsprüfung
+	TFlwPumpVoltAPEIn(LSTestHandle, ftEnd, 10);
+
+	// Übernehmen für Timeoutüberwachung 
+	fMeasTime = ftEnd;
+
+	return (iRet);
+}
+
 /*-------------------------------------------------------------------------------------------------------------------------*
  * function name        : int GeneratePositionNormalContactSequence( void )                                                *
  *                                                                                                                         *
@@ -1226,9 +1441,9 @@ int SETrimmingCell::GenerateTestSequence( TestSequenceParam Parameter )
 int SETrimmingCell::GeneratePositionNormalContactSequence( void )
 {
 	int RetVal = 0;
-	float TestTime = 0.0;																										//actual test time
+	float TestTime = 0.0;	//actual test time
 
-	TFlwChSelect( LSTestHandle, TestTime, 0xFFFFF );												//channel select
+	TFlwChSelect( LSTestHandle, TestTime, 0xFFFFF );	//channel select
 
 	TFlwPumpVoltAPESet( LSTestHandle, TestTime, 0.55f );
 
@@ -1254,9 +1469,9 @@ int SETrimmingCell::GeneratePositionNormalContactSequence( void )
 int SETrimmingCell::GeneratePositionNormalSequence( void )
 {
 	int RetVal = 0;
-	float TestTime = 0.0;																										//actual test time
+	float TestTime = 0.0;		//actual test time
 
-	TFlwChSelect( LSTestHandle, TestTime, 0xFFFFF );												//channel select
+	TFlwChSelect( LSTestHandle, TestTime, 0xFFFFF );	//channel select
 
 	//contact
 	TFlwPumpVoltAPESet( LSTestHandle, TestTime, 0.55f );
@@ -1318,9 +1533,9 @@ int SETrimmingCell::GeneratePositionNormalSequence( void )
 int SETrimmingCell::GenerateHeaterNormalSequence( void )
 {
 	int RetVal = 0;
-	float TestTime = 0.0;																										//actual test time
+	float TestTime = 0.0;			//actual test time
 
-	TFlwChSelect( LSTestHandle, TestTime, 0xFFFFF );												//channel select
+	TFlwChSelect( LSTestHandle, TestTime, 0xFFFFF );	//channel select
 
 	TFlwContChkHS( LSTestHandle, TestTime, 1 );
 
@@ -1364,9 +1579,9 @@ int SETrimmingCell::GenerateHeaterNormalSequence( void )
 int SETrimmingCell::GenerateUniversalNormalSequence( void )
 {
 	int RetVal = 0;
-	float TestTime = 0.0;																										//actual test time
+	float TestTime = 0.0;	//actual test time
 
-	TFlwChSelect( LSTestHandle, TestTime, 0xFFFFF );												//channel select
+	TFlwChSelect( LSTestHandle, TestTime, 0xFFFFF );	//channel select
 
 	TFlwLeakCurrVoltSet( LSTestHandle, TestTime, ParamNormal->ParamUniversalNormal.UlSetpoint );
 
@@ -1432,9 +1647,9 @@ int SETrimmingCell::GenerateUniversalNormalSequence( void )
 int SETrimmingCell::GenerateIlmNormalSequence( void )
 {
 	int RetVal = 0;
-	float TestTime = 0.0;																										//actual test time
+	float TestTime = 0.0;			//actual test time
 
-	TFlwChSelect( LSTestHandle, TestTime, 0xFFFFF );												//channel select
+	TFlwChSelect( LSTestHandle, TestTime, 0xFFFFF );	//channel select
 
 	TFlwLeakCurrVoltSet( LSTestHandle, TestTime, ParamNormal->ParamUniversalNormal.UlSetpoint );
 	
@@ -1500,9 +1715,9 @@ int SETrimmingCell::GenerateIlmNormalSequence( void )
 int SETrimmingCell::GenerateUnNormalSequence( void )
 {
 	int RetVal = 0;
-	float TestTime = 0.0;																										//actual test time
+	float TestTime = 0.0;	//actual test time
 
-	TFlwChSelect( LSTestHandle, TestTime, 0xFFFFF );												//channel select
+	TFlwChSelect( LSTestHandle, TestTime, 0xFFFFF );//channel select
 
 	TFlwHeaterVoltSet( LSTestHandle, TestTime, ParamNormal->ParamUnNormal.HeaterVoltageSetpoint, 0.0f );
 
@@ -1947,35 +2162,39 @@ int SETrimmingCell::GenerateAndTransmittSequence( ProcessType Type )
 				Parameter.RiSetPoint = -1.0f;
 			}	
 	
-			GenerateTestSequence( Parameter );															    //generate sequence function calls for trimming cell
+			GenerateTestSequence( Parameter );	//generate sequence function calls for trimming cell
 			break;		
 
 		case MeasurePositionNormal:
-			GeneratePositionNormalSequence( );															    //generate sequence function calls for position normal
+			GeneratePositionNormalSequence( );	//generate sequence function calls for position normal
 			break;
 
 		case MeasureHeaterNormal:
-			GenerateHeaterNormalSequence( );															      //generate sequence function calls for heater normal
+			GenerateHeaterNormalSequence( );	//generate sequence function calls for heater normal
 			break;
 				
 		case MeasureUniversalNormal:
-			GenerateUniversalNormalSequence( );															    //generate sequence function calls for universal normal
+			GenerateUniversalNormalSequence( );	   //generate sequence function calls for universal normal
 			break;
 
 		case MeasureUnNormal:
-			GenerateUnNormalSequence( );															          //generate sequence function calls for un normal
+			GenerateUnNormalSequence( );	//generate sequence function calls for un normal
 			break;
 
 		case MeasureIpNormal:
-			GenerateIpNormalSequence( );															          //generate sequence function calls for ip normal
+			GenerateIpNormalSequence( );	//generate sequence function calls for ip normal
 			break;
 
 		case MeasureIlmNormal:
-			GenerateIlmNormalSequence( );															          //generate sequence function calls for ilm normal
+			GenerateIlmNormalSequence( );	//generate sequence function calls for ilm normal
 			break;
 
 		case Cooling:
-			GenerateCoolingSequence( );															            //generate sequence function calls for cooling
+			GenerateCoolingSequence( );	   //generate sequence function calls for cooling
+			break;
+		case Ip4MeasureUNernstControl:     // IP4 measurement under Nernst voltage control  
+			break;
+		case Ip4Measure2PointUp:		   // IP4 measurement via 2-point UP measuremant
 			break;
 
 		default:
@@ -2119,7 +2338,7 @@ int SEReferenceCell::GenerateTestSequence( TestSequenceParam Parameter )
 	TFlwRiACIn( LSTestHandle, LocalTime, 910 );														//measure riacin
 	//evaluate contact check
 	TFlwContChkSS( LSTestHandle, LocalTime, 2400.0, 0.01e-3f, 1 );	
-	TestTime = max( TestTime, LocalTime);																	//set test time to max time
+	TestTime = max( TestTime, LocalTime );																	//set test time to max time
 
 	//negative pump voltage pulse
 	if( Parameter.NegPulseTime > 0.0 ) 
@@ -2156,8 +2375,6 @@ int SEReferenceCell::GenerateTestSequence( TestSequenceParam Parameter )
 
 	return 0;
 }
-
-
 
 
 //public memberfunctions at SEReferenceCell---------------------------------------------------------------------------------
@@ -2403,7 +2620,7 @@ int SEReferenceCell::GenerateAndTransmittSequence(void)
 		Parameter.FastContinue = 0.0;	
 	}
 
-	GenerateTestSequence( Parameter );														//generate sequence function calls for reference cell
+	GenerateTestSequence( Parameter );	//generate sequence function calls for reference cell
 
 	for( int i = 0; i < 100; i++ )
 	{
@@ -2417,7 +2634,7 @@ int SEReferenceCell::GenerateAndTransmittSequence(void)
 	}
 
 
-	RetVal = TFlwGenerate( LSTestHandle );																	//generate sequence
+	RetVal = TFlwGenerate( LSTestHandle );	//generate sequence
 	printf("Cell[%d]:TFlwGenerate=%d\n", CellId, RetVal);
 	
 	RetVal = MCxTFlowTx( LSTestHandle, ( LONG ) pow( 2.0f, CellId - 1 ) );  //transmitt sequence to ADVOV cards

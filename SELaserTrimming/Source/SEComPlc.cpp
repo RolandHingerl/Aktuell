@@ -479,7 +479,7 @@ int SEComPlc::Connect( void )
   int FuncRetVal = 0;
   int RetVal = 0;
   fd_set rfds;
-  timeval Time = {1,0};																										//set timeout at communication 1,000 s
+  timeval Time = {1,0};	//set timeout at communication 1,000 s
 
   FD_ZERO( &rfds );
   FD_SET( SEComPlc::ServerSocket, &rfds );

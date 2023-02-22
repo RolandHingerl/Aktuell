@@ -27,7 +27,13 @@
 #define _SE_TRIMMING_CHAMBER_INTERNAL
 #include "SETrimmingChamber.h"
 #undef _SE_TRIMMING_CHAMBER_INTERNAL
+#if 0
 #include "..\Library\SETestDLL.h"
+#else
+#include "..\Library\LSTestDLL.h"
+#include "..\Library\MCDataEx.h"
+
+#endif
 
 SETrimmingRetain SETrimmingChamber::SETrimmingRetainData[CHAMBER_COUNT] = { 0, 0 };
 //thread handle of each process chamber
@@ -111,7 +117,7 @@ void SETrimmingChamber::HandleProcess( void )
 				{
 					for( int i = 0; i < CELL_TIEPOINT_COUNT; i++ )
 					{
-						TrimmCell->GetLastValue( i + 1, AdvRiAC, 0, &Value );
+						TrimmCell->GetLastValue( i + 1, IMT_RiAC, 0, &Value );
 						printf( "Chamber[%d]:HandleProcess:SE%d:ContactOk=%d\n", ChamberId, i + 1, SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.ContactOk );
 						printf( "Chamber[%d]:HandleProcess:SE%d:RiStable=%d;%f\n", ChamberId, i + 1, SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.RiStability, Value.Value );
 						if( ( SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.ContactOk == false ) || 
@@ -164,11 +170,11 @@ void SETrimmingChamber::HandleProcess( void )
 				{
 					//output Ip corrected
 					SEValueInfo Value;
-					TrimmCell->GetLastValue( 1, AdvIPu, 0, &Value );
+					TrimmCell->GetLastValue( 1, IMT_IPu, 0, &Value );
 					MinLastTime = _I64_MAX;
 					for( int i = 0; i < CELL_TIEPOINT_COUNT; i++ )
 					{
-						TrimmCell->GetLastValue( i + 1, AdvIPu, 0, &Value );
+						TrimmCell->GetLastValue( i + 1, IMT_IPu, 0, &Value );
 						printf( "Chamber[%d]:HandleProcess:SE%d:Ipkorr=%f\n", ChamberId, i + 1, IpCorrection( Value.Value ) * 1.0e6f );
 						if( ( Value.ReceiveTime != 0 ) && 
 								( SETrimmingValues.SETrimmingValuesTiepoint[ i ].ProcessData.TrimmingDone == false ) )
@@ -193,7 +199,7 @@ void SETrimmingChamber::HandleProcess( void )
 				MinLastTime = _I64_MAX;
 				for( int i = 0; i < CELL_TIEPOINT_COUNT; i++ )
 				{
-					TrimmCell->GetLastValue( i + 1, AdvIPu, 0, &Value );
+					TrimmCell->GetLastValue( i + 1, IMT_IPu, 0, &Value );
 					if( ( Value.ReceiveTime != 0 ) && 
 							( SETrimmingValues.SETrimmingValuesTiepoint[ i ].ProcessData.TrimmingDone == false ) )
 						{
@@ -531,7 +537,7 @@ void SETrimmingChamber::HandleProcess( void )
 							MaxRhh = 0.0f;
 							for( int i = 0; i < CELL_TIEPOINT_COUNT; i++ )
 							{
-								TrimmCell->GetLastValue( i + 1, AdvRHh, 0, &Value );	
+								TrimmCell->GetLastValue( i + 1, IMT_RHh, 0, &Value );
 
 								if( _isnan( Value.Value )	== 0 )
 								{
@@ -578,7 +584,7 @@ void SETrimmingChamber::HandleProcess( void )
 		{
 			if( ( ProcessStep < 11 )/* && ( ProcessStep > 5 )*/ ) 
 			{
-				TrimmCell->GetLastValue( i + 1, AdvRiAC, 0, &Value );	
+				TrimmCell->GetLastValue( i + 1, IMT_RiAC, 0, &Value );
 				if( _isnan( Value.Value )	== 0 )
 				{
 					if( ( Value.Value > ParamTrimmChamber.ParamTrimmCell.ParamMainTrimmingCell.HeatingRiOffset ) &&
@@ -588,7 +594,7 @@ void SETrimmingChamber::HandleProcess( void )
 					}
 				}
 
-				TrimmCell->GetLastValue( i + 1, AdvIPu, 0, &Value );	
+				TrimmCell->GetLastValue( i + 1, IMT_IPu, 0, &Value );
 				if( _isnan( Value.Value )	== 0 )
 				{
 					if( Value.Value != 0.0f )
@@ -597,7 +603,7 @@ void SETrimmingChamber::HandleProcess( void )
 					}
 				}
 
-				ReferenceCell->GetLastValue( 1, AdvIPu, 0, &Value );	
+				ReferenceCell->GetLastValue( 1, IMT_IPu, 0, &Value );
 				if( _isnan( Value.Value )	== 0 )
 				{
 					if( Value.Value != 0.0f )
@@ -606,7 +612,7 @@ void SETrimmingChamber::HandleProcess( void )
 					}
 				}
 
-				ReferenceCell->GetLastValue( 2, AdvIPu, 0, &Value );	
+				ReferenceCell->GetLastValue( 2, IMT_IPu, 0, &Value );
 				if( _isnan( Value.Value )	== 0 )
 				{
 					if( Value.Value != 0.0f )
@@ -618,7 +624,7 @@ void SETrimmingChamber::HandleProcess( void )
 
 			if( ProcessStep == 12 )
 			{
-				TrimmCell->GetLastValue( i + 1, AdvRHh, 0, &Value );	
+				TrimmCell->GetLastValue( i + 1, IMT_RHh, 0, &Value );
 				if( _isnan( Value.Value )	== 0 )
 				{
 					SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.ActRhh = Value.Value;
@@ -658,7 +664,7 @@ void SETrimmingChamber::HandleProcess( void )
 						{
 							SENormalValues[ i ].ResultDataPosition.Status = 0x0000001F; 
 
-							TrimmCell->GetLastValue( i + 1, AdvIPu, 3, &Value );
+							TrimmCell->GetLastValue( i + 1, IMT_IPu, 3, &Value );
 							if( _isnan( Value.Value )	== 0 )
 							{
 								if( Value.Value != 0.0 )
@@ -671,11 +677,11 @@ void SETrimmingChamber::HandleProcess( void )
 								}
 							}
 
-							TrimmCell->GetLastValue( i + 1, AdvUAPE, 1, &ValueU1 );
-							TrimmCell->GetLastValue( i + 1, AdvIPu, 1, &ValueI1 );
+							TrimmCell->GetLastValue( i + 1, IMT_UAPE, 1, &ValueU1 );
+							TrimmCell->GetLastValue( i + 1, IMT_IPu, 1, &ValueI1 );
 
-							TrimmCell->GetLastValue( i + 1, AdvUAPE, 2, &ValueU2 );
-							TrimmCell->GetLastValue( i + 1, AdvIPu, 2, &ValueI2 );
+							TrimmCell->GetLastValue( i + 1, IMT_UAPE, 2, &ValueU2 );
+							TrimmCell->GetLastValue( i + 1, IMT_IPu, 2, &ValueI2 );
 
 							if( ( _isnan( ValueU1.Value ) == 0 ) && 
 									( _isnan( ValueI1.Value ) == 0 ) && 
@@ -696,11 +702,11 @@ void SETrimmingChamber::HandleProcess( void )
 								}
 							}
 
-							TrimmCell->GetLastValue( i + 1, AdvUHS, 1, &ValueU1 );
-							TrimmCell->GetLastValue( i + 1, AdvIH, 1, &ValueI1 );
+							TrimmCell->GetLastValue( i + 1, IMT_UHS, 1, &ValueU1 );
+							TrimmCell->GetLastValue( i + 1, IMT_IH, 1, &ValueI1 );
 
-							TrimmCell->GetLastValue( i + 1, AdvURE, 1, &ValueU2 );
-							TrimmCell->GetLastValue( i + 1, AdvIPr, 1, &ValueI2 );
+							TrimmCell->GetLastValue( i + 1, IMT_URE, 1, &ValueU2 );
+							TrimmCell->GetLastValue( i + 1, IMT_IPr, 1, &ValueI2 );
 
 							if( ( _isnan( ValueU1.Value ) == 0 ) && 
 									( _isnan( ValueI1.Value ) == 0 ) )
@@ -767,7 +773,7 @@ void SETrimmingChamber::HandleProcess( void )
 						{
 							SENormalValues[ i ].ResultDataHeater.Status = 0x0000000F; 
 
-							TrimmCell->GetLastValue( i + 1, AdvHSCont, 1, &Value );
+							TrimmCell->GetLastValue( i + 1, IMT_HSCONT, 1, &Value );
 							if( _isnan( Value.Value )	== 0 )
 							{
 								SENormalValues[ i ].ResultDataHeater.ContactOk = Value.Value; 
@@ -777,7 +783,7 @@ void SETrimmingChamber::HandleProcess( void )
 								}
 							}
 							
-							TrimmCell->GetLastValue( i + 1, AdvRHh, 1, &Value );
+							TrimmCell->GetLastValue( i + 1, IMT_RHh, 1, &Value );
 							if( _isnan( Value.Value )	== 0 )
 							{
 								if( Value.Value != 0.0 )
@@ -791,7 +797,7 @@ void SETrimmingChamber::HandleProcess( void )
 								}
 							}
 
-							TrimmCell->GetLastValue( i + 1, AdvIH, 1, &Value );
+							TrimmCell->GetLastValue( i + 1, IMT_IH, 1, &Value );
 							if( _isnan( Value.Value )	== 0 )
 							{
 								if( Value.Value != 0.0 )
@@ -805,7 +811,7 @@ void SETrimmingChamber::HandleProcess( void )
 								}
 							}
 
-							TrimmCell->GetLastValue( i + 1, AdvRHk, 1, &Value );
+							TrimmCell->GetLastValue( i + 1, IMT_RHk, 1, &Value );
 							if( _isnan( Value.Value )	== 0 )
 							{
 								if( Value.Value != 0.0 )
@@ -847,7 +853,7 @@ void SETrimmingChamber::HandleProcess( void )
 						{
 							SENormalValues[ i ].ResultDataUniversal.Status = 0x0000003F; 
 
-							TrimmCell->GetLastValue( i + 1, AdvIgRK, 1, &Value );
+							TrimmCell->GetLastValue( i + 1, IMT_IgRK, 1, &Value );
 							if( _isnan( Value.Value )	== 0 )
 							{
 								if( Value.Value != 0.0 )
@@ -861,7 +867,7 @@ void SETrimmingChamber::HandleProcess( void )
 								}
 							}
 
-							TrimmCell->GetLastValue( i + 1, AdvIL, 1, &Value );
+							TrimmCell->GetLastValue( i + 1, IMT_IL, 1, &Value );
 							if( _isnan( Value.Value )	== 0 )
 							{
 								if( Value.Value != 0.0 )
@@ -875,7 +881,7 @@ void SETrimmingChamber::HandleProcess( void )
 								}
 							}
 
-							TrimmCell->GetLastValue( i + 1, AdvRiDCn, 1, &Value );
+							TrimmCell->GetLastValue( i + 1, IMT_RiDCn, 1, &Value );
 							if( _isnan( Value.Value )	== 0 )
 							{
 								if( Value.Value != 0.0 )
@@ -889,7 +895,7 @@ void SETrimmingChamber::HandleProcess( void )
 								}
 							}	
 
-							TrimmCell->GetLastValue( i + 1, AdvIpRE, 1, &Value );
+							TrimmCell->GetLastValue( i + 1, IMT_IpRE, 1, &Value );
 							if( _isnan( Value.Value )	== 0 )
 							{
 								if( Value.Value != 0.0 )
@@ -903,7 +909,7 @@ void SETrimmingChamber::HandleProcess( void )
 								}
 							}
 
-							TrimmCell->GetLastValue( i + 1, AdvRiAC, 2, &Value );
+							TrimmCell->GetLastValue( i + 1, IMT_RiAC, 2, &Value );
 							if( _isnan( Value.Value )	== 0 )
 							{
 								if( Value.Value != 0.0 )
@@ -917,7 +923,7 @@ void SETrimmingChamber::HandleProcess( void )
 								}
 							}
 
-							TrimmCell->GetLastValue( i + 1, AdvRiAC, 1, &Value );
+							TrimmCell->GetLastValue( i + 1, IMT_RiAC, 1, &Value );
 							if( _isnan( Value.Value )	== 0 )
 							{
 								if( Value.Value != 0.0 )
@@ -962,7 +968,7 @@ void SETrimmingChamber::HandleProcess( void )
 						{
 							SENormalValues[ i ].ResultDataUn.Status = 0x00000001; 
 
-							TrimmCell->GetLastValue( i + 1, AdvUN, 1, &Value );
+							TrimmCell->GetLastValue( i + 1, IMT_UN, 1, &Value );
 							if( _isnan( Value.Value )	== 0 )
 							{
 								if( Value.Value != 0.0 )
@@ -1000,7 +1006,7 @@ void SETrimmingChamber::HandleProcess( void )
 						{
 							SENormalValues[ i ].ResultDataIp.Status = 0x00000003; 
 
-							TrimmCell->GetLastValue( i + 1, AdvIPu, 1, &Value );
+							TrimmCell->GetLastValue( i + 1, IMT_IPu, 1, &Value );
 							if( _isnan( Value.Value )	== 0 )
 							{
 								if( Value.Value != 0.0 )
@@ -1014,7 +1020,7 @@ void SETrimmingChamber::HandleProcess( void )
 								}
 							}
 
-							TrimmCell->GetLastValue( i + 1, AdvUAPE, 1, &Value );
+							TrimmCell->GetLastValue( i + 1, IMT_UAPE, 1, &Value );
 							if( _isnan( Value.Value )	== 0 )
 							{
 								if( Value.Value != 0.0 )
@@ -1057,7 +1063,7 @@ void SETrimmingChamber::HandleProcess( void )
 						{
 							SENormalValues[ i ].ResultDataIlm.Status = 0x000001FF; 
 
-							TrimmCell->GetLastValue( i + 1, AdvIL, 1, &Value );
+							TrimmCell->GetLastValue( i + 1, IMT_IL, 1, &Value );
 							if( _isnan( Value.Value )	== 0 )
 							{
 								if( Value.Value != 0.0 )
@@ -1071,7 +1077,7 @@ void SETrimmingChamber::HandleProcess( void )
 								}
 							}
 
-							TrimmCell->GetLastValue( i + 1, AdvIPr, 1, &Value );
+							TrimmCell->GetLastValue( i + 1, IMT_IPr, 1, &Value );
 							if( _isnan( Value.Value )	== 0 )
 							{
 								if( Value.Value != 0.0 )
@@ -1085,7 +1091,7 @@ void SETrimmingChamber::HandleProcess( void )
 								}
 							}
 					
-							TrimmCell->GetLastValue( i + 1, AdvUAPE, 1, &Value );
+							TrimmCell->GetLastValue( i + 1, IMT_UAPE, 1, &Value );
 							if( _isnan( Value.Value )	== 0 )
 							{
 								if( Value.Value != 0.0 )
@@ -1099,8 +1105,8 @@ void SETrimmingChamber::HandleProcess( void )
 								}
 							}
 
-							TrimmCell->GetLastValue( i + 1, AdvIPu, 1, &ValueI1 );
-							TrimmCell->GetLastValue( i + 1, AdvUN, 1, &ValueU1 );
+							TrimmCell->GetLastValue( i + 1, IMT_IPu, 1, &ValueI1 );
+							TrimmCell->GetLastValue( i + 1, IMT_UN, 1, &ValueU1 );
 
 							if( ( _isnan( ValueI1.Value )	== 0 ) && ( _isnan( ValueU1.Value )	== 0 ) )
 							{
@@ -1120,8 +1126,8 @@ void SETrimmingChamber::HandleProcess( void )
 								}
 							}
 
-							TrimmCell->GetLastValue( i + 1, AdvIPu, 2, &ValueI1 );
-							TrimmCell->GetLastValue( i + 1, AdvUN, 2, &ValueU1 );
+							TrimmCell->GetLastValue( i + 1, IMT_IPu, 2, &ValueI1 );
+							TrimmCell->GetLastValue( i + 1, IMT_UN, 2, &ValueU1 );
 
 							if( ( _isnan( ValueI1.Value )	== 0 ) && ( _isnan( ValueU1.Value )	== 0 ) )
 							{
@@ -1139,8 +1145,8 @@ void SETrimmingChamber::HandleProcess( void )
 
 							}
 
-							TrimmCell->GetLastValue( i + 1, AdvIPu, 3, &ValueI1 );
-							TrimmCell->GetLastValue( i + 1, AdvUN, 3, &ValueU1 );
+							TrimmCell->GetLastValue( i + 1, IMT_IPu, 3, &ValueI1 );
+							TrimmCell->GetLastValue( i + 1, IMT_UN, 3, &ValueU1 );
 
 							if( ( _isnan( ValueI1.Value )	== 0 ) && ( _isnan( ValueU1.Value )	== 0 ) )
 							{
@@ -1252,18 +1258,18 @@ bool SETrimmingChamber::IpStabilityCheck( int Tiepoint, int Count  )
 	SEValueInfo Value;
 
 	//get ip ref sens 1
-	ReferenceCell->GetLastValue(1, AdvIPu, 0, &Value);
+	ReferenceCell->GetLastValue(1, IMT_IPu, 0, &Value);
 	IpRef[0] = IpCorrection( Value.Value );
 
 	//get ip ref sens 2
-	ReferenceCell->GetLastValue(2, AdvIPu, 0, &Value);
+	ReferenceCell->GetLastValue(2, IMT_IPu, 0, &Value);
 	IpRef[1] = IpCorrection( Value.Value );
 
 
 	float IpDiff = 0.0f, IpAct = 0.0f, IpDiffUnscaled = 0.0f;
 
 	//get ip 
-	TrimmCell->GetLastValue( Tiepoint, AdvIPu, 0, &Value );
+	TrimmCell->GetLastValue( Tiepoint, IMT_IPu, 0, &Value );
 
 	if( _isnan( Value.Value )	== 0 )
 	{
@@ -1360,15 +1366,15 @@ int SETrimmingChamber::DieselQualification( void )
 		SetPartState( i + 1, IoDiesel );																			//set part state temporarily io diesel
 
 		//get ip ref sens 1
-		ReferenceCell->GetLastValue(1, AdvIPu, 0, &Value);
+		ReferenceCell->GetLastValue(1, IMT_IPu, 0, &Value);
 		IpRef[0] = IpCorrection( Value.Value );
 
 		//get ip ref sens 2
-		ReferenceCell->GetLastValue(2, AdvIPu, 0, &Value);
+		ReferenceCell->GetLastValue(2, IMT_IPu, 0, &Value);
 		IpRef[1] = IpCorrection( Value.Value );
 
 		//check Ip value for diesel qualification
-		TrimmCell->GetLastValue( i + 1, AdvIPu, 0, &Value );
+		TrimmCell->GetLastValue( i + 1, IMT_IPu, 0, &Value );
 		if( _isnan( Value.Value )	== 0 )
 		{
 			if( Value.Value != 0.0f )
@@ -1406,7 +1412,7 @@ int SETrimmingChamber::DieselQualification( void )
 		}
 	
 		//check Rhh value for diesel qualification
-		TrimmCell->GetLastValue( i + 1, AdvRHh, 0, &Value );
+		TrimmCell->GetLastValue( i + 1, IMT_RHh, 0, &Value );
 		LastValue = Value.Value;
 		if( _isnan( LastValue ) == 0 )
 		{
@@ -1424,7 +1430,7 @@ int SETrimmingChamber::DieselQualification( void )
 		}
 
 		//check Ph value for diesel qualification
-		TrimmCell->GetLastValue( i + 1, AdvPH, 0, &Value );
+		TrimmCell->GetLastValue( i + 1, IMT_PH, 0, &Value );
 		LastValue = Value.Value;
 		if( _isnan( LastValue ) == 0 )
 		{
@@ -1481,15 +1487,15 @@ int SETrimmingChamber::TrimmingEntryCheck( void )
 			SetPartState( i + 1, SelectGasoline );
 
 			//get ip ref sens 1
-			ReferenceCell->GetLastValue(1, AdvIPu, 0, &Value);
+			ReferenceCell->GetLastValue(1, IMT_IPu, 0, &Value);
 			IpRef[0] = IpCorrection( Value.Value );
 
 			//get ip ref sens 2
-			ReferenceCell->GetLastValue(2, AdvIPu, 0, &Value);
+			ReferenceCell->GetLastValue(2, IMT_IPu, 0, &Value);
 			IpRef[1] = IpCorrection( Value.Value );
 
 			//check Ip value for diesel qualification
-			TrimmCell->GetLastValue( i + 1, AdvIPu, 0, &Value );
+			TrimmCell->GetLastValue( i + 1, IMT_IPu, 0, &Value );
 			if( _isnan( Value.Value )	== 0 )
 			{
 				if( Value.Value != 0.0f )
@@ -1510,7 +1516,7 @@ int SETrimmingChamber::TrimmingEntryCheck( void )
 			}
 
 			//check Rhh value
-			TrimmCell->GetLastValue( i + 1, AdvRHh, 0, &Value);
+			TrimmCell->GetLastValue( i + 1, IMT_RHh, 0, &Value);
 			LastValue = Value.Value;
 			if( _isnan( LastValue ) == 0 )
 			{
@@ -1528,7 +1534,7 @@ int SETrimmingChamber::TrimmingEntryCheck( void )
 			}
 	
 			//check Ph value
-			TrimmCell->GetLastValue( i + 1, AdvPH, 0, &Value);
+			TrimmCell->GetLastValue( i + 1, IMT_PH, 0, &Value);
 			LastValue = Value.Value;
 			if( _isnan( LastValue ) == 0 )
 			{
@@ -1545,7 +1551,7 @@ int SETrimmingChamber::TrimmingEntryCheck( void )
 				SetPartState( i + 1, Nio, ValueNotPlausible );
 			}
 	
-			TrimmCell->GetLastValue( i + 1, AdvIPu, 0, &Value);
+			TrimmCell->GetLastValue( i + 1, IMT_IPu, 0, &Value);
 			if( _isnan( Value.Value )	== 0 )
 			{
 				if( Value.Value != 0.0f )
@@ -1617,7 +1623,7 @@ int SETrimmingChamber::TrimmingEndCheck( void )
 		for( int i = 0; i < CELL_TIEPOINT_COUNT; i++ )
 		{
 			//get ip trimming cell 
-			TrimmCell->GetLastValue(i + 1, AdvIPu, 0, &Value);
+			TrimmCell->GetLastValue(i + 1, IMT_IPu, 0, &Value);
 
 			if( SETrimmingValues.SETrimmingValuesTiepoint[ i ].ResultData.SEPartStatus != IoDiesel )
 			{
@@ -1895,19 +1901,19 @@ int SETrimmingChamber::SavePartsJournal( void )
 
 				#ifndef LOGGING_OLD_FORMAT
 				fprintf_s( JournalDataFile, "0;" ); //not used ( formally: stability time previous )
-				TrimmCell->GetLastValue( i + 1, AdvRHh, 0, &Value );
+				TrimmCell->GetLastValue( i + 1, IMT_RHh, 0, &Value );
 				if( _isnan( Value.Value )	== 0 )
 				{
 					fprintf_s( JournalDataFile, "%.2f;", Value.Value ); //last rhh
 				}
 			
-				TrimmCell->GetLastValue( i + 1, AdvPH, 0, &Value );
+				TrimmCell->GetLastValue( i + 1, IMT_PH, 0, &Value );
 				if( _isnan( Value.Value )	== 0 )
 				{
 					fprintf_s( JournalDataFile, "%.2f;", Value.Value ); //last ph
 				}
 
-				TrimmCell->GetLastValue( i + 1, AdvRiAC, 0, &Value );
+				TrimmCell->GetLastValue( i + 1, IMT_RiAC, 0, &Value );
 				if( _isnan( Value.Value )	== 0 )
 				{
 					fprintf_s( JournalDataFile, "%.2f;", Value.Value ); //last riac
@@ -1916,29 +1922,29 @@ int SETrimmingChamber::SavePartsJournal( void )
 				fprintf_s( JournalDataFile, "%.3f;", ParamTrimmChamber.ParamTrimmCell.ParamIpMeasurement.IpCorrectionSource ); //ip correction source
 				fprintf_s( JournalDataFile, "%.3f;", ParamStationTrimmChamber.ParamStationTrimmProcess.ParamStationTrimmingProcess.IpOffsetDiesel ); //ip offset ds
 				fprintf_s( JournalDataFile, "%.3f;", ParamTrimmChamber.ParamTrimmProcess.ParamTrimmingProcess.DeltaIpLayerEndScrap ); //delta layer end scrap
-				TrimmCell->GetLastValue( i + 1, AdvdtRiReg, 0, &Value );
+				TrimmCell->GetLastValue( i + 1, IMT_dtRiReg, 0, &Value );
 				if( _isnan( Value.Value )	== 0 )
 				{
 					fprintf_s( JournalDataFile, "%.3f;", Value.Value ); //last ri reg dt
 				}
-				TrimmCell->GetLastValue( i + 1, AdvEH, 0, &Value );
+				TrimmCell->GetLastValue( i + 1, IMT_EH, 0, &Value );
 				if( _isnan( Value.Value )	== 0 )
 				{
 					fprintf_s( JournalDataFile, "%.3f;", Value.Value ); //last eh
 				}
-				TrimmCell->GetLastValue( i + 1, AdvdIHdt, 0, &Value );
+				TrimmCell->GetLastValue( i + 1, IMT_dIHdt, 0, &Value );
 				if( _isnan( Value.Value )	== 0 )
 				{
 					fprintf_s( JournalDataFile, "%.3f;", Value.Value ); //last eh
 				}
 				fprintf_s( JournalDataFile, "0;" );																	//not used (formally: ih t1)
-				TrimmCell->GetLastValue( i + 1, AdvdRHdt, 0, &Value );
+				TrimmCell->GetLastValue( i + 1, IMT_dRHdt, 0, &Value );
 				if( _isnan( Value.Value )	== 0 )
 				{
 					fprintf_s( JournalDataFile, "%.3f;", Value.Value ); //last rh dt
 				}
 				fprintf_s( JournalDataFile, "0;" );																	//not used (formally: rh t1)
-				TrimmCell->GetLastValue( i + 1, AdvRHk, 0, &Value );
+				TrimmCell->GetLastValue( i + 1, IMT_RHk, 0, &Value );
 				if( _isnan( Value.Value )	== 0 )
 				{
 					fprintf_s( JournalDataFile, "%.3f;", Value.Value ); //last rhk
@@ -2834,11 +2840,11 @@ int SETrimmingChamber::Trimming( void )
 	}
 
 	//get ip ref sens 1
-	ReferenceCell->GetLastValue(1, AdvIPu, 0, &Value);
+	ReferenceCell->GetLastValue(1, IMT_IPu, 0, &Value);
 	IpRef[0] = IpCorrection( Value.Value );
 
 	//get ip ref sens 2
-	ReferenceCell->GetLastValue(2, AdvIPu, 0, &Value);
+	ReferenceCell->GetLastValue(2, IMT_IPu, 0, &Value);
 	IpRef[1] = IpCorrection( Value.Value );
 
 	for( int i = 0; i < CELL_TIEPOINT_COUNT; i++ )
@@ -2846,7 +2852,7 @@ int SETrimmingChamber::Trimming( void )
 		if( SETrimmingValues.SETrimmingValuesTiepoint[ i ].ProcessData.TrimmingDone == false )
 		{
 			//get ip trimming cell 
-			TrimmCell->GetLastValue(i + 1, AdvIPu, 0, &Value);
+			TrimmCell->GetLastValue(i + 1, IMT_IPu, 0, &Value);
 
 			if( _isnan( Value.Value )	== 0 )
 			{

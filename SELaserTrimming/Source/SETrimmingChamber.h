@@ -247,12 +247,12 @@ struct SETrimmingInfo
 //normal info
 struct SENormalInfo
 {
-	ResultDataPositionNormal ResultDataPosition;														//result data position normal
-	ResultDataHeaterNormal ResultDataHeater;																//result data heater normal
-	ResultDataUniversalNormal	ResultDataUniversal;													//result data universal normal
-	ResultDataUnNormal ResultDataUn;																				//result data un normal
-	ResultDataIpNormal ResultDataIp;																				//result data ip normal
-	ResultDataIlmNormal ResultDataIlm;																			//result data ilm normal
+	ResultDataPositionNormal ResultDataPosition;	//result data position normal
+	ResultDataHeaterNormal ResultDataHeater;	    //result data heater normal
+	ResultDataUniversalNormal	ResultDataUniversal;//result data universal normal
+	ResultDataUnNormal ResultDataUn;	//result data un normal
+	ResultDataIpNormal ResultDataIp;	//result data ip normal
+	ResultDataIlmNormal ResultDataIlm;	//result data ilm normal
 };
 
 //image processing
@@ -331,13 +331,13 @@ private:
 	#endif
 	
 public:
-	static SETrimmingRetain SETrimmingRetainData[CHAMBER_COUNT];						//read retain data
-	SETrimmingChamber();																										//constructor
-	SETrimmingChamber( int ChamberId, SEComMicroLas *ComMicroLas, SEComPlc *ComPlc );         //constructor (overload)
-	~SETrimmingChamber();																										//destructor
-	int Initializing( void );																						    //initialisation
-	int CheckFirmware( void );																							//check and update firmware
-	int MasterReset( void );																								//master reset
+	static SETrimmingRetain SETrimmingRetainData[CHAMBER_COUNT];	//read retain data
+	SETrimmingChamber();	//constructor
+	SETrimmingChamber( int ChamberId, SEComMicroLas *ComMicroLas, SEComPlc *ComPlc );    //constructor (overload)
+	~SETrimmingChamber();		//destructor
+	int Initializing( void );	//initialisation
+	int CheckFirmware( void );	//check and update firmware
+	int MasterReset( void );	//master reset
 	int SetParameter( ParamStationDataTrimmingChamber ParamStationTrimmChamber ); //set parameter for trimming chamber
 	int SetParameter( ParamDataTrimmingChamber ParamTrimmChamber );					//set parameter for trimming chamber
 	int SetParameter( ParamDataNormalMeasure ParamNormalMeasure );					//set parameter for normal measure
@@ -358,15 +358,15 @@ public:
 	int ReadResult( ResultDataIlmNormal * ResultIlmNormal, unsigned int Tiepoint );
 	//read cyclical data
 	int ReadCyclic( CyclicDataTrimming * CyclicTrimming, unsigned int * ChamberState, float * IpRef );
-	bool ParameterReadyToStart( );																					//check ready to start
-	bool ParameterReadyForTrimming( );																			//check ready for trimming
+	bool ParameterReadyToStart( );		//check ready to start
+	bool ParameterReadyForTrimming( );	//check ready for trimming
 	//install threads
 	int InstallThread( LPTHREAD_START_ROUTINE CallbackAddressMeasurementCell, 
 										 LPTHREAD_START_ROUTINE CallbackAddressReferenceCell, 
 										 LPTHREAD_START_ROUTINE CallbackAddressChamber,
 										 LONG ( *pFCallBackMeasurementCell )( WORD wFUIdx,WORD wPartIdx,int eMainType,float rMVal,DWORD tsMTime,LONG lResIdx ), 
 										 LONG ( *pFCallBackReferenceCell )( WORD wFUIdx,WORD wPartIdx,int eMainType,float rMVal,DWORD tsMTime,LONG lResIdx ) );
-	void DeinstallThread();																									//deinstall threads
+	void DeinstallThread();     //deinstall threads
 	int StartProcess(ProcessType Type);																			//start porcess
 	bool ProcessFinished( void );																						//check process finished
 	int ClearAllValues( void );																							//clear all values
