@@ -24,6 +24,7 @@
 #include "SEComPlc.h"
 #undef _SE_COM_PLC_INTERNAL
 
+
 HANDLE SEComPlc::hThreadHandleComPlc[CHAMBER_COUNT] = { NULL, NULL };	
 
 //public memberfunctions --------------------------------------------------------------------------------------------------
@@ -101,8 +102,7 @@ SEComPlc::~SEComPlc( void )
  *-------------------------------------------------------------------------------------------------------------------------*/
 int SEComPlc::Initializing( void )
 {	
-  int RetVal = 0;	
-                                                        //return value
+  int RetVal = 0;	     //return value                                              
   int FuncRetVal = 0;
   
   WSADATA wsaData;
@@ -445,9 +445,9 @@ ParamDataScannerWriteText SEComPlc::GetParamDataWriteText( void )
  *                                                                                                                         *
  * description:         : This is the function to get the normal number.                                                   *
  *-------------------------------------------------------------------------------------------------------------------------*/
-unsigned int SEComPlc::GetNormalNumber( void )
+NormalNumber SEComPlc::GetNormalNumber( void )
 {
-  return NormalNumber;
+  return eNormalNumber;
 }
 
 /*-------------------------------------------------------------------------------------------------------------------------*
@@ -571,7 +571,7 @@ int SEComPlc::RecvSend( void )
   BytesRecv = SOCKET_ERROR;
 
   fd_set rfds;
-  timeval Time = { 0, 200000 };																						//set timeout at communication 200 ms
+  timeval Time = { 0, 200000 }; //set timeout at communication 200 ms
 
   FD_ZERO( &rfds );
   FD_SET( SEComPlc::AcceptSocket, &rfds );
@@ -589,6 +589,7 @@ int SEComPlc::RecvSend( void )
       switch( Recvbuf[0] )
       {
         case SET_PARAMETER:  
+
           switch( Recvbuf[1] )
           {
             case 0:
@@ -646,7 +647,7 @@ int SEComPlc::RecvSend( void )
 
             case 10:
               memcpy_s( &ParameterNormalNumberReqPacket, sizeof( ParameterNormalNumberReqPacket ), &Recvbuf, sizeof( ParameterNormalNumberReqPacket ) );
-              memcpy_s( &NormalNumber, sizeof( NormalNumber ), &ParameterNormalNumberReqPacket.NormalNumber, sizeof( ParameterNormalNumberReqPacket.NormalNumber ) );
+              memcpy_s( &eNormalNumber, sizeof( eNormalNumber ), &ParameterNormalNumberReqPacket.NormalNumber, sizeof( ParameterNormalNumberReqPacket.NormalNumber ) );
               break;
 
             default:
@@ -659,9 +660,10 @@ int SEComPlc::RecvSend( void )
           memcpy_s( &Sendbuf, sizeof( Sendbuf ), &ParameterResPacket, sizeof( ParameterResPacket ) );
           break;
         case GET_RESULT:
+
           if( BootReady == true )
           {
-						memcpy_s( &ResultReqPacket, sizeof( PlcRequestResult ), &Recvbuf, sizeof( PlcRequestResult ) );
+		    memcpy_s( &ResultReqPacket, sizeof( PlcRequestResult ), &Recvbuf, sizeof( PlcRequestResult ) );
             FuncRetVal = ResultRead( ResultReqPacket.SubId, ResultReqPacket.Tiepoint ); 
             if( FuncRetVal == 0 )
             {

@@ -19,3 +19,5 @@ __int64 GetActualSystemTimeMs( void );
 
 float Round( float Input, int Digits );
 
+bool CheckBounds(float fRealVal, float fLowerLimit, float fUpperLimit);
+

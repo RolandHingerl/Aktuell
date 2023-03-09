@@ -43,6 +43,9 @@ float Round( float Input, int Digits )
 	return X; 
 }
 
-
-
-	
+bool CheckBounds(float fRealVal, float fLowerLimit, float fUpperLimit)
+//Prüft REAL-Wert auf Bereich
+//Anm.: NaN berücksichtigt (ergibt iO).
+{
+	return( !( (fRealVal < fLowerLimit) || (fRealVal > fUpperLimit) ) ); //return result
+}

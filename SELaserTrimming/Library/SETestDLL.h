@@ -164,7 +164,6 @@ EXPORT LONG CALLTYPE TFlwHeaterVoltIn(HANDLE handle,float TestTime,LONG ResultId
 EXPORT LONG CALLTYPE TFlwHeaterVoltSet(HANDLE handle,float TestTime,float HeaterVolt,float RampTime SPRESIDX);
 EXPORT LONG CALLTYPE TFlwHeaterVoltSetExt(HANDLE handle,float TestTime,float HeaterVolt,float RampTime,LONG Flags SPRESIDX);
 EXPORT LONG CALLTYPE TFlwHeaterVoltSetNoRamp(HANDLE handle,float TestTime,float HeaterVolt SPRESIDX);
-EXPORT LONG CALLTYPE TFlwHeaterVoltSupvSet(HANDLE handle,float TestTime,float HeatVoltMin,float HeatVoltMax SPRESIDX);
 EXPORT LONG CALLTYPE TFlwHeaterVoltSupvIn(HANDLE handle,float TestTime,LONG ResultIdxMin,LONG ResultIdxMax,LONG ResultIdxTime);
 EXPORT LONG CALLTYPE TFlwHeaterPowerSupvSet(HANDLE handle,float TestTime,float HeatPowMin,float HeatPowMax SPRESIDX);
 EXPORT LONG CALLTYPE TFlwHeaterPowerSupvIn(HANDLE handle,float TestTime,LONG ResultIdxMin,LONG ResultIdxMax,LONG ResultIdxTime);

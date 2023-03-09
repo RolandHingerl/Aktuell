@@ -41,16 +41,16 @@ HANDLE SETrimmingChamber::hThreadHandleProcessChamber[CHAMBER_COUNT] = { NULL, N
 HANDLE SETrimmingChamber::ghMutex[CHAMBER_COUNT] = { NULL, NULL };
 
 
-/*-------------------------------------------------------------------------------------------------------------------------*
- * function name        : void HandleProcess( void )                                                                       *
- *                                                                                                                         *
- * input:               : void                                                                                             *
- *                                                                                                                         *
- * output:              : void                                                                                             *
- *                                                                                                                         *
- * description:         : This is function to handle all chamber processes (trimming and normal).                          *
- *-------------------------------------------------------------------------------------------------------------------------*/
-void SETrimmingChamber::HandleProcess( void )
+	/*-------------------------------------------------------------------------------------------------------------------------*
+	 * function name        : void HandleProcess( void )                                                                       *
+	 *                                                                                                                         *
+	 * input:               : void                                                                                             *
+	 *                                                                                                                         *
+	 * output:              : void                                                                                             *
+	 *                                                                                                                         *
+	 * description:         : This is function to handle all chamber processes (trimming and normal).                          *
+	 *-------------------------------------------------------------------------------------------------------------------------*/
+void SETrimmingChamber::HandleProcess(void)
 {
 	bool ContactOk = true;
 	bool RiStableOk = true;
@@ -66,1155 +66,1316 @@ void SETrimmingChamber::HandleProcess( void )
 
 	__int64	MinLastTime = 0;
 
-
-	if( ProcessTrimmingActive == true )
+#if defined _INDUTRON_PRINT_MORE 
+	if (CurrProcessStep != ProcessStep)
 	{
-		switch( ProcessStep )
-		{	
-			case 0:
-				//initialize trimming
-				for( int i = 0; i < CELL_TIEPOINT_COUNT; i++ )
-				{ 
-          TrimmingInitRaw( i + 1 ); 
-					if( ( SETrimmingValues.SETrimmingValuesTiepoint[ i ].AssemblyDataTiepoint.SEPartStatus != NotProcessed ) &&
-							( SETrimmingValues.SETrimmingValuesTiepoint[ i ].AssemblyDataTiepoint.SEPartStatus != ReworkOnceAgain	) )
-					{
-						SETrimmingValues.SETrimmingValuesTiepoint[ i ].ProcessData.TrimmingDone = true;
-					}
+		printf( "##ProcessStep Old: %d -> New: %d\n", CurrProcessStep, ProcessStep);
+		printf( "TrimmCell->IsSequenceFinished() = %d\n", TrimmCell->IsSequenceFinished() );
+		CurrProcessStep = ProcessStep;
+	}
+#endif
 
-					if( ( SETrimmingValues.AssemblyDataCommon.EvacuatedPressure > ParamTrimmChamber.ParamTrimmCell.ParamIpMeasurement.EvacuatedPressureAllowedMax ) )
-					{
-						SetPartState( i + 1, Rework, EvacuatedPressureOutside );
-						SETrimmingValues.SETrimmingValuesTiepoint[ i ].ProcessData.TrimmingDone = true;
-						ProcessStep = 9;
-					}	
-					if( ( SETrimmingValues.AssemblyDataCommon.LeakageRate > ParamTrimmChamber.ParamTrimmCell.ParamIpMeasurement.LeackageRateAllowedMax ) )
-					{
-						SetPartState( i + 1, Rework, LeackageRateOutside );
-						SETrimmingValues.SETrimmingValuesTiepoint[ i ].ProcessData.TrimmingDone = true;
-						ProcessStep = 9;
-					}	
 
-				}
-				ProcessStep++;
-				break;
-			case 1:
-				//contact check trimming cell
-				ChamberState = INF_WAIT_RI_STABILITY;
-				ContactOk = true;
-				RiStableOk = true;
+	switch (eProcessType)
+	{
 
-				for( int i = 0; i < CELL_TIEPOINT_COUNT; i++ )
-				{ 
-					SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.ContactOk = TrimmCell->IsContactingOk(i + 1);
-					SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.RiStability = TrimmCell->IsRiStable(i + 1);
-					ContactOk &= SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.ContactOk; 
-					RiStableOk &= SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.RiStability;
-				}
-				if( ( ( ContactOk == true ) &&
-							( RiStableOk == true ) ) ||
-						( GetActualSystemTimeMs( ) >= TrimmCell->GetSequenceStartTime() + ( ParamTrimmChamber.ParamTrimmCell.ParamRiStability.RiStabilityDuration * 1000 ) ) )
+	case ProcessType::MeasureTrimming: // measure and trimming
+	case ProcessType::MeasureSelection:// measure and selection
+	case ProcessType::Ip4MeasureUNernstControl:
+	case ProcessType::Ip4Measure2PointUp:
+	{
+		switch (ProcessStep)
+		{
+		case EProcessStep::Initialization:
+			//initialize trimming
+			for (int i = 0; i < CELL_TIEPOINT_COUNT; i++)
+			{
+				TrimmingInitRaw(i + 1);
+
+				if ((SETrimmingValues.SETrimmingValuesTiepoint[i].AssemblyDataTiepoint.SEPartStatus != NotProcessed) &&
+					(SETrimmingValues.SETrimmingValuesTiepoint[i].AssemblyDataTiepoint.SEPartStatus != ReworkOnceAgain))
 				{
-					for( int i = 0; i < CELL_TIEPOINT_COUNT; i++ )
+					SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.TrimmingDone = true;
+				}
+
+				if ((SETrimmingValues.AssemblyDataCommon.EvacuatedPressure > ParamTrimmChamber.ParamTrimmCell.ParamIpMeasurement.EvacuatedPressureAllowedMax))
+				{
+					SetPartState(i + 1, Rework, EvacuatedPressureOutside);
+					SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.TrimmingDone = true;
+					ProcessStep = EProcessStep::TrimmingFinished;
+				}
+				if ((SETrimmingValues.AssemblyDataCommon.LeakageRate > ParamTrimmChamber.ParamTrimmCell.ParamIpMeasurement.LeackageRateAllowedMax))
+				{
+					SetPartState(i + 1, Rework, LeackageRateOutside);
+					SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.TrimmingDone = true;
+					ProcessStep = EProcessStep::TrimmingFinished;
+				}
+			}
+			ProcessStep = EProcessStep::Heating;
+			break;
+			//contact check trimming cell
+		case EProcessStep::Heating:
+
+			ChamberState = INF_WAIT_RI_STABILITY;
+
+			ContactOk = true;
+			RiStableOk = true;
+
+			for (int i = 0; i < CELL_TIEPOINT_COUNT; i++)
+			{
+				SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.ContactOk = TrimmCell->IsContactingOk(i + 1);
+
+				SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.RiStability = TrimmCell->IsRiStable(i + 1);
+
+				ContactOk &= SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.ContactOk;
+
+				RiStableOk &= SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.RiStability;
+			}
+
+			if (((ContactOk == true) &&
+				(RiStableOk == true)) ||
+				(GetActualSystemTimeMs() >= TrimmCell->GetSequenceStartTime() + (ParamTrimmChamber.ParamTrimmCell.ParamRiStability.RiStabilityDuration * 1000)))
+			{
+				for (int i = 0; i < CELL_TIEPOINT_COUNT; i++)
+				{
+					TrimmCell->GetLastValue(i + 1, IMT_RiAC, 0, &Value);
+#if 1
+					printf("Chamber[%d]:HandleProcess:SE%d:ContactOk=%d\n", ChamberId, i + 1, SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.ContactOk);
+					printf("Chamber[%d]:HandleProcess:SE%d:RiStable=%d;%f\n", ChamberId, i + 1, SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.RiStability, Value.Value);
+#endif
+					if ((SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.ContactOk == false) ||
+						(SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.RiStability == false))
 					{
-						TrimmCell->GetLastValue( i + 1, IMT_RiAC, 0, &Value );
-						printf( "Chamber[%d]:HandleProcess:SE%d:ContactOk=%d\n", ChamberId, i + 1, SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.ContactOk );
-						printf( "Chamber[%d]:HandleProcess:SE%d:RiStable=%d;%f\n", ChamberId, i + 1, SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.RiStability, Value.Value );
-						if( ( SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.ContactOk == false ) || 
-								( SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.RiStability == false ) )
-						{
-							SetPartState( i + 1, Rework, ContactRiStabilityNok );
-							SETrimmingValues.SETrimmingValuesTiepoint[ i ].ProcessData.TrimmingDone = true;
-						}	
+						SetPartState(i + 1, Rework, ContactRiStabilityNok);
+						SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.TrimmingDone = true;
 					}
-					ProcessStep++;
+				}
+				ProcessStep = EProcessStep::MeasureIpRefCell1;
+			}
+			break;
+
+		case EProcessStep::MeasureIpRefCell1:
+		{	//check contact at reference cell and measure Ip reference zero correction
+			ContactRefOk = true;
+
+#ifndef REF_SIMULATION
+			ContactRefOk = ReferenceCell->IsContactingOk(1) && ReferenceCell->IsContactingOk(2);
+			printf("Chamber[%d]:HandleProcess:REF1:ContactOk=%d;REF2:ContactOk=%d\n", ChamberId, ReferenceCell->IsContactingOk(1), ReferenceCell->IsContactingOk(2));
+#endif
+
+			if ((ContactRefOk == true) ||
+				(GetActualSystemTimeMs() >= TrimmCell->GetSequenceStartTime() + 45000))
+			{
+				ReferenceCell->GetLastIpMean(1, 4, &IpRefCorrectionZero[0]);
+				ReferenceCell->GetLastIpMean(2, 4, &IpRefCorrectionZero[1]);
+
+				printf("Chamber[%d]:HandleProcess:REF1:Ip=%f\n", ChamberId, IpRefCorrectionZero[0] * 1.0e6f);
+				printf("Chamber[%d]:HandleProcess:REF2:Ip=%f\n", ChamberId, IpRefCorrectionZero[1] * 1.0e6f);
+
+				for (int i = 0; i < CELL_TIEPOINT_COUNT; i++)
+				{
+					SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.ContactRefOk = ContactRefOk;
+					if (SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.ContactRefOk = false)
+					{
+						SetPartState(i + 1, Rework, ContactRefNok);
+						SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.TrimmingDone = true;
+					}
+				}
+				DigitalOut = HEATING_FINISHED_FLAG;
+				printf("Chamber[%d]:HandleProcess:Set flag heating finished\n", ChamberId);
+				ProcessStep = EProcessStep::WaitingpPrtialPressureReached;
+			}
+			break;
+			}
+		case EProcessStep::WaitingpPrtialPressureReached:
+		{	//wait for flag
+			if ((DigitalIn & PRESSURE_CONTROL_DONE) == PRESSURE_CONTROL_DONE)
+			{
+				//output Ip corrected
+				SEValueInfo Value;
+				TrimmCell->GetLastValue(1, IMT_IPu, 0, &Value);
+				MinLastTime = _I64_MAX;
+				for (int i = 0; i < CELL_TIEPOINT_COUNT; i++)
+				{
+					TrimmCell->GetLastValue(i + 1, IMT_IPu, 0, &Value);
+					printf("Chamber[%d]:HandleProcess:SE%d:Ipkorr=%f\n", ChamberId, i + 1, IpCorrection(Value.Value) * 1.0e6f);
+					if ((Value.ReceiveTime != 0) &&
+						(SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.TrimmingDone == false))
+					{
+						MinLastTime = min(MinLastTime, Value.ReceiveTime);
+					}
+				}
+				StabilityStartTime = MinLastTime;//GetActualSystemTimeMs( );
+
+				ProcessStep = EProcessStep::IPuStabilityCheck;
+				DigitalOut = NONE_FLAG;
+				printf("Chamber[%d]:HandleProcess:Reset flag heating finished\n", ChamberId);
+			}
+			break;
+		}
+		case EProcessStep::IPuStabilityCheck:
+		{
+			//Ip stability check	
+			//IgnoreNewPressure = true;
+			ChamberState = INF_WAIT_IP_STABILITY;
+
+			SEValueInfo Value;
+			MinLastTime = _I64_MAX;
+			for (int i = 0; i < CELL_TIEPOINT_COUNT; i++)
+			{
+				TrimmCell->GetLastValue(i + 1, IMT_IPu, 0, &Value);
+				if ((Value.ReceiveTime != 0) &&
+					(SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.TrimmingDone == false))
+				{
+					MinLastTime = min(MinLastTime, Value.ReceiveTime);
+				}
+			}
+
+			switch (StabilityStep)
+			{
+			case 0:
+				if (( /*GetActualSystemTimeMs( )*/MinLastTime + 50.0f >=
+					StabilityStartTime + ((ParamTrimmChamber.ParamTrimmCell.ParamMainTrimmingCell.PauseTime +
+						ParamTrimmChamber.ParamTrimmCell.ParamMainTrimmingCell.StartDelay +
+						ParamTrimmChamber.ParamTrimmCell.ParamMainTrimmingCell.HeatingTime) * 1000.0f)) ||
+					(GetActualSystemTimeMs() >= TrimmCell->GetSequenceStartTime() + (ParamTrimmChamber.ParamTrimmProcess.ParamTrimmingProcess.ProcessTimeout * 1000)))
+				{
+					printf("Chamber[%d]:HandleProcess:Stabilitycheck 1\n", ChamberId);
+					for (int i = 0; i < CELL_TIEPOINT_COUNT; i++)
+					{
+						SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.IpStability = IpStabilityCheck(i + 1, 1);
+					}
+					StabilityStartTime = /*GetActualSystemTimeMs( )*/MinLastTime;
+					StabilityStep++;
+
+				}
+				break;
+
+			case 1:
+				if (( /*GetActualSystemTimeMs( )*/MinLastTime + 50.0f >=
+					StabilityStartTime + ((ParamTrimmChamber.ParamTrimmCell.ParamIpMeasurement.IpStableTime1) * 1000.0f)))
+				{
+					printf("Chamber[%d]:HandleProcess:Stabilitycheck 2\n", ChamberId);
+					StabilityOk = true;
+					for (int i = 0; i < CELL_TIEPOINT_COUNT; i++)
+					{
+						if (SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.IpStability == false)
+						{
+							SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.IpStability = IpStabilityCheck(i + 1, 2);
+							StabilityOk &= SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.IpStability;
+							printf("Chamber[%d]:HandleProcess:Stabilitycheck 2:SE%d:OK=%d\n", ChamberId, i + 1, SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.IpStability);
+						}
+					}
+					if (StabilityOk == true)
+					{
+						StabilityStep = 0;
+						StabilityStartTime = 0;
+						ProcessStep = EProcessStep::GasControl;
+					}
+					else
+					{
+						StabilityStartTime = /*GetActualSystemTimeMs( )*/MinLastTime;
+						StabilityStep++;
+					}
 				}
 				break;
 
 			case 2:
-				//check contact at reference cell and measure Ip reference zero correction
-				ContactRefOk = true;
-
-				#ifndef REF_SIMULATION
-				ContactRefOk = ReferenceCell->IsContactingOk(1) && ReferenceCell->IsContactingOk(2);
-				printf( "Chamber[%d]:HandleProcess:REF1:ContactOk=%d;REF2:ContactOk=%d\n",ChamberId, ReferenceCell->IsContactingOk(1), ReferenceCell->IsContactingOk(2) );
-				#endif
-
-				if( ( ContactRefOk == true ) || 
-						( GetActualSystemTimeMs( ) >= TrimmCell->GetSequenceStartTime() + 45000 ) )
+				if (( /*GetActualSystemTimeMs( )*/MinLastTime + 50.0f >=
+					StabilityStartTime + ((ParamTrimmChamber.ParamTrimmCell.ParamIpMeasurement.IpStableTime2) * 1000.0f)))
 				{
-					ReferenceCell->GetLastIpMean(1,4,&IpRefCorrectionZero[0]);
-					printf("Chamber[%d]:HandleProcess:REF1:Ip=%f\n",ChamberId, IpRefCorrectionZero[0] * 1.0e6f );
-					ReferenceCell->GetLastIpMean(2,4,&IpRefCorrectionZero[1]);
-					printf("Chamber[%d]:HandleProcess:REF2:Ip=%f\n",ChamberId, IpRefCorrectionZero[1] * 1.0e6f );
-
-					for( int i = 0; i < CELL_TIEPOINT_COUNT; i++ )
+					printf("Chamber[%d]:HandleProcess:Stabilitycheck 3\n", ChamberId);
+					StabilityOk = true;
+					for (int i = 0; i < CELL_TIEPOINT_COUNT; i++)
 					{
-						SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.ContactRefOk = ContactRefOk;
-						if( SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.ContactRefOk = false )
+						if (SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.IpStability == false)
 						{
-							SetPartState( i + 1, Rework, ContactRefNok );
-							SETrimmingValues.SETrimmingValuesTiepoint[ i ].ProcessData.TrimmingDone = true;
-						}	
+							SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.IpStability = IpStabilityCheck(i + 1, 3);
+							StabilityOk &= SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.IpStability;
+							printf("Chamber[%d]:HandleProcess:Stabilitycheck 3:SE%d:OK=%d\n", ChamberId, i + 1, SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.IpStability);
+						}
 					}
-					DigitalOut = HEATING_FINISHED_FLAG;
-					printf( "Chamber[%d]:HandleProcess:Set flag heating finished\n", ChamberId );
-					ProcessStep++;
-				}
-				break;
-			
-
-			case 3:	
-				//wait for flag
-				if( ( DigitalIn &	HEATING_FINISHED_FLAG ) == HEATING_FINISHED_FLAG )
-				{
-					//output Ip corrected
-					SEValueInfo Value;
-					TrimmCell->GetLastValue( 1, IMT_IPu, 0, &Value );
-					MinLastTime = _I64_MAX;
-					for( int i = 0; i < CELL_TIEPOINT_COUNT; i++ )
+					if (StabilityOk == true)
 					{
-						TrimmCell->GetLastValue( i + 1, IMT_IPu, 0, &Value );
-						printf( "Chamber[%d]:HandleProcess:SE%d:Ipkorr=%f\n", ChamberId, i + 1, IpCorrection( Value.Value ) * 1.0e6f );
-						if( ( Value.ReceiveTime != 0 ) && 
-								( SETrimmingValues.SETrimmingValuesTiepoint[ i ].ProcessData.TrimmingDone == false ) )
-						{
-							MinLastTime = min( MinLastTime, Value.ReceiveTime );	
-						}		
+						StabilityStep = 0;
+						StabilityStartTime = 0;
+						ProcessStep = EProcessStep::GasControl;
 					}
-					StabilityStartTime = MinLastTime;//GetActualSystemTimeMs( );
-
-					ProcessStep++;
-					DigitalOut = NONE_FLAG;
-					printf( "Chamber[%d]:HandleProcess:Reset flag heating finished\n", ChamberId );
-				}
-				break;
-
-			case 4:
-				//Ip stability check	
-				//IgnoreNewPressure = true;
-				ChamberState = INF_WAIT_IP_STABILITY;
-
-				SEValueInfo Value;
-				MinLastTime = _I64_MAX;
-				for( int i = 0; i < CELL_TIEPOINT_COUNT; i++ )
-				{
-					TrimmCell->GetLastValue( i + 1, IMT_IPu, 0, &Value );
-					if( ( Value.ReceiveTime != 0 ) && 
-							( SETrimmingValues.SETrimmingValuesTiepoint[ i ].ProcessData.TrimmingDone == false ) )
-						{
-							MinLastTime = min( MinLastTime, Value.ReceiveTime );	
-						}
-				}
-
-				switch( StabilityStep )
-				{
-					case 0:
-						if( ( /*GetActualSystemTimeMs( )*/MinLastTime + 50.0f >= 
-									StabilityStartTime + ( ( ParamTrimmChamber.ParamTrimmCell.ParamMainTrimmingCell.PauseTime + 
-									ParamTrimmChamber.ParamTrimmCell.ParamMainTrimmingCell.StartDelay + 
-									ParamTrimmChamber.ParamTrimmCell.ParamMainTrimmingCell.HeatingTime ) * 1000.0f ) ) ||
-								( GetActualSystemTimeMs( ) >= TrimmCell->GetSequenceStartTime() + ( ParamTrimmChamber.ParamTrimmProcess.ParamTrimmingProcess.ProcessTimeout * 1000 ) ) )
-						{
-							printf( "Chamber[%d]:HandleProcess:Stabilitycheck 1\n", ChamberId );
-							for( int i = 0; i < CELL_TIEPOINT_COUNT; i++ )
-							{ 
-								SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.IpStability = IpStabilityCheck( i + 1, 1 );
-							}
-							StabilityStartTime = /*GetActualSystemTimeMs( )*/MinLastTime;
-							StabilityStep++;
-						
-						}
-						break;
-
-					case 1:
-						if( ( /*GetActualSystemTimeMs( )*/MinLastTime + 50.0f >= 
-									StabilityStartTime + ( ( ParamTrimmChamber.ParamTrimmCell.ParamIpMeasurement.IpStableTime1 ) * 1000.0f ) ) )
-							{
-								printf( "Chamber[%d]:HandleProcess:Stabilitycheck 2\n", ChamberId );
-								StabilityOk = true;
-								for( int i = 0; i < CELL_TIEPOINT_COUNT; i++ )
-								{ 
-									if( SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.IpStability == false )
-									{
-										SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.IpStability = IpStabilityCheck(i + 1, 2);
-										StabilityOk &= SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.IpStability;
-										printf( "Chamber[%d]:HandleProcess:Stabilitycheck 2:SE%d:OK=%d\n", ChamberId, i+1, SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.IpStability );
-									}
-								}
-								if( StabilityOk == true )
-								{
-									StabilityStep = 0;
-									StabilityStartTime = 0;
-									ProcessStep++;
-								}
-								else
-								{
-									StabilityStartTime = /*GetActualSystemTimeMs( )*/MinLastTime;
-									StabilityStep++;
-								}
-							}
-						break;
-
-					case 2:
-					 if( ( /*GetActualSystemTimeMs( )*/MinLastTime + 50.0f >= 
-									StabilityStartTime + ( (  ParamTrimmChamber.ParamTrimmCell.ParamIpMeasurement.IpStableTime2 ) * 1000.0f ) ) )
-							{
-								printf( "Chamber[%d]:HandleProcess:Stabilitycheck 3\n", ChamberId );
-								StabilityOk = true;
-								for( int i = 0; i < CELL_TIEPOINT_COUNT; i++ )
-								{ 
-									if( SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.IpStability == false )
-									{
-										SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.IpStability = IpStabilityCheck(i + 1, 3);
-										StabilityOk &= SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.IpStability;
-										printf( "Chamber[%d]:HandleProcess:Stabilitycheck 3:SE%d:OK=%d\n", ChamberId, i+1, SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.IpStability );
-									}
-								}
-								if( StabilityOk == true )
-								{
-									StabilityStep = 0;
-									StabilityStartTime = 0;
-									ProcessStep++;
-								}
-								else
-								{
-									StabilityStartTime = /*GetActualSystemTimeMs( )*/MinLastTime;
-									StabilityStep++;
-								}
-							}
-						break;
-
-					case 3:
-					 if( ( /*GetActualSystemTimeMs( )*/MinLastTime + 50.0f >= 
-									StabilityStartTime + ( ( ParamTrimmChamber.ParamTrimmCell.ParamIpMeasurement.IpStableTime3 ) * 1000.0f ) ) )
-							{
-								printf( "Chamber[%d]:HandleProcess:Stabilitycheck 4\n",ChamberId );
-								StabilityOk = true;
-								for( int i = 0; i < CELL_TIEPOINT_COUNT; i++ )
-								{ 
-									if( SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.IpStability == false )
-									{
-										SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.IpStability = IpStabilityCheck(i + 1, 4);
-										StabilityOk &= SETrimmingValues.SETrimmingValuesTiepoint[ i ].ProcessData.IpStability;
-										printf( "Chamber[%d]:HandleProcess:Stabilitycheck 4:SE%d:OK=%d\n", ChamberId, i+1, SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.IpStability );
-										if( SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.IpStability == false )
-										{
-											SetPartState( i + 1, Rework, NoStability  );
-											SETrimmingValues.SETrimmingValuesTiepoint[ i ].ProcessData.TrimmingDone = true;
-										}
-									}
-								}
-								StabilityStep = 0;
-								StabilityStartTime = 0;
-								ProcessStep++;
-							}
-						break;
-
-				}
-			
-				break;
-
-			case 5:
-				//gascontrol
-				//IgnoreNewPressure = false;
-				if( ParamTrimmChamber.ParamRefCell.ParamMainReferenceCell.TestGasOverRef == 1 )
-				{
-					GasControl();
-				}
-				
-				//save ip from reference 1
-				ReferenceCell->GetLastIpMean(1,3,&IpRefAct);
-				IpRefBeforeProcess[0] = IpRefAct * 1.0e6f;
-				for( int i = 0; i < CELL_TIEPOINT_COUNT; i++ )
-				{
-					SETrimmingValues.SETrimmingValuesTiepoint[i].ResultData.IpRef[0]	= IpRefBeforeProcess[0];
-				}
-
-				//save ip from reference 2
-				ReferenceCell->GetLastIpMean(2,3,&IpRefAct);
-				IpRefBeforeProcess[1] = IpRefAct * 1.0e6f;
-				for( int i = 0; i < CELL_TIEPOINT_COUNT; i++ )
-				{
-					SETrimmingValues.SETrimmingValuesTiepoint[i].ResultData.IpRef[1]	= IpRefBeforeProcess[1];
-				}
-
-				ProcessStep++;
-				break;
-
-			case 6:
-				//diesel qualification
-				switch( SETrimmingValues.AssemblyDataCommon.ProcessType )
-				{
-					case 1:
-						//seperation diesel and gasoline 
-						DieselQualification();
-						for( int i = 0; i < CELL_TIEPOINT_COUNT; i++ )
-						{
-							SETrimmingValues.SETrimmingValuesTiepoint[ i ].ProcessData.TrimmingDone = true; 	
-						}
-						ProcessStep = 9;
-						break;
-
-					case 2:
-						//only gasoline
-						ProcessStep++;
-						break;
-
-					case 3:
-						//seperation diesel and trimming gasoline
-						DieselQualification();
-						ProcessStep++;
-						break;
-
-					default:
-						;
-						break;
-
-				}
-				break;
-		
-			case 7:
-				ChamberState = INF_TRIMMING_ACTIVE;
-				TrimmingEntryCheck();
-				ProcessStep++;
-				break;
-
-			case 8:
-				if( Trimming() == 0 )
-				{
-					ProcessStep++;
-				}
-				if( GetActualSystemTimeMs( ) >= TrimmCell->GetSequenceStartTime() + ( ParamTrimmChamber.ParamTrimmProcess.ParamTrimmingProcess.ProcessTimeout * 1000 ) )
-				{
-
-				}
-				break;
-
-			case 9:
-				ChamberState = INF_TRIMMING_FINISHED;
-				TrimmingEndCheck();
-
-				//save ip from reference 1
-				ReferenceCell->GetLastIpMean(1,3,&IpRefAct);
-				IpRefAfterProcess[0] = IpRefAct * 1.0e6f;
-
-				//save ip from reference 2
-				ReferenceCell->GetLastIpMean(2,3,&IpRefAct);
-				IpRefAfterProcess[1] = IpRefAct * 1.0e6f;
-
-				ProcessStep++;
-				break;
-
-			case 10:
-				
-				/*for(int i = 0; i < 1000000; i++)
-				{
-					if( ( TimeDiffType[i] != 0 ) && ( TimeDiffOnce == false )	)
-					{	
-						TimeDiffOnce = true;
-						printf("TimeDiff=%lld %lld\n", TimeDiff[i], TimeDiffType[i]);
-					}
-				}*/
-
-
-				ChamberState = INF_LABELING;
-				if( ParamTrimmChamber.ParamTrimmProcess.ParamTrimmingProcess.Labeling != 0 )
-				{
-					for( int i = 0; i < CELL_TIEPOINT_COUNT; i++ )
+					else
 					{
-						if( ( SETrimmingValues.SETrimmingValuesTiepoint[ i ].ResultData.SEPartStatus == Nio ) ||
-								( SETrimmingValues.SETrimmingValuesTiepoint[ i ].ResultData.SEPartStatus == IoDiesel ) ||
-								( SETrimmingValues.SETrimmingValuesTiepoint[ i ].ResultData.SEPartStatus == IoGasoline ) )
-						{
-							GetNewSerialNumberAndCode( SETrimmingValues.SETrimmingValuesTiepoint[ i ].ResultData.SEPartStatus, 
-																				 &SETrimmingValues.SETrimmingValuesTiepoint[ i ].ResultData.SerialNumber, 
-																				 SETrimmingValues.SETrimmingValuesTiepoint[ i ].ResultData.SerialCode );	
-			
-							float StartX, StartY, Phi;
-							char ChamberIdString[5];
-																					
-							//write text (serial code)
-							RotatePosition( i + 1, SETrimmingValues.SETrimmingValuesTiepoint[ i ].ProcessData.XPosition,SETrimmingValues.SETrimmingValuesTiepoint[ i ].ProcessData.YPosition, &StartX, &StartY, NULL );
-							StartX -= 0.79f;
-							StartY -= 1.43f;
-							RotateBackPosition( i + 1, StartX, StartY, &StartX, &StartY, &Phi );
-							if( ComMicroLas->WriteText( SETrimmingValues.SETrimmingValuesTiepoint[ i ].ResultData.SerialCode, 
-																					StartX, 
-																					StartY,
-																					SETrimmingValues.SETrimmingValuesTiepoint[ i ].ProcessData.ZPosition,
-																					Phi + 90.0f,
-																					( 100.0f / SETrimmingValues.AssemblyDataCommon.AdjustPollutePercent ) * ParamTrimmChamber.ParamTrimmProcess.ParamLaser.LaserPower[ i ] * 2.0f ) != 0 )
-							{
-								ComPlc->SetErrorCode( GLOBAL_ERROR, FLT_MICROLAS_SCANNER );
-							}
-							
-							//write text (global chamber ident)
-							RotatePosition( i + 1, SETrimmingValues.SETrimmingValuesTiepoint[ i ].ProcessData.XPosition,SETrimmingValues.SETrimmingValuesTiepoint[ i ].ProcessData.YPosition, &StartX, &StartY, NULL );
-							StartX -= 2.10f;							
-							StartY += 0.50f;
-							RotateBackPosition( i + 1, StartX, StartY, &StartX, &StartY, &Phi );
-							sprintf_s( ChamberIdString, "%01d", 2 * SETrimmingValues.AssemblyDataCommon.GlobalMachineNumber + SETrimmingValues.AssemblyDataCommon.ChamberNumber - 2 ); 
-							if( ComMicroLas->WriteText( ChamberIdString, 
-																					StartX, 
-																					StartY,
-																					SETrimmingValues.SETrimmingValuesTiepoint[ i ].ProcessData.ZPosition,
-																					Phi + 180.0f,
-																					( 100.0f / SETrimmingValues.AssemblyDataCommon.AdjustPollutePercent ) * ParamTrimmChamber.ParamTrimmProcess.ParamLaser.LaserPower[ i ] * 2.0f ) )
-							{
-								ComPlc->SetErrorCode( GLOBAL_ERROR, FLT_MICROLAS_SCANNER );
-							}		
-			
-						}
+						StabilityStartTime = /*GetActualSystemTimeMs( )*/MinLastTime;
+						StabilityStep++;
 					}
-				}
-				ChamberState = INF_EMPTY;
-				SavePartsJournal();
-
-				switch( ParamTrimmChamber.ParamTrimmProcess.ParamTrimmingProcess.CoolingType )
-				{
-					case 0:
-						for( int i = 0; i < CELL_TIEPOINT_COUNT; i++ )
-						{
-							SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.EntireProcessDone = true;
-						}
-						ProcessStep = 13;
-						break;
-
-					case 1:
-						CoolingStartTime = GetActualSystemTimeMs( );
-						ProcessStep+=2;
-						break;
-
-					case 2:
-						CoolingStartTime = GetActualSystemTimeMs( );
-						ProcessStep++;
-						break;
-
-					default:
-						break;
 				}
 				break;
 
-				case 11:
-					ChamberState = INF_COOLING_PASSIVE;
-					TrimmCell->StopSequence();
-					Sleep(100);
-					TrimmCell->GenerateAndTransmittSequence( Cooling );
-					Sleep(100);
-					TrimmCell->StartSequence();
-					ProcessStep++;
-					break;
-
-				case 12:
-					
-					switch( ParamTrimmChamber.ParamTrimmProcess.ParamTrimmingProcess.CoolingType )
+			case 3:
+				if (( /*GetActualSystemTimeMs( )*/MinLastTime + 50.0f >=
+					StabilityStartTime + ((ParamTrimmChamber.ParamTrimmCell.ParamIpMeasurement.IpStableTime3) * 1000.0f)))
+				{
+					printf("Chamber[%d]:HandleProcess:Stabilitycheck 4\n", ChamberId);
+					StabilityOk = true;
+					for (int i = 0; i < CELL_TIEPOINT_COUNT; i++)
 					{
-						case 0:
-							;	
-							break;
-
-						case 1:
-							if( GetActualSystemTimeMs( ) - CoolingStartTime >= ParamTrimmChamber.ParamTrimmProcess.ParamTrimmingProcess.CoolingTimePassive * 1000 )
+						if (SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.IpStability == false)
+						{
+							SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.IpStability = IpStabilityCheck(i + 1, 4);
+							StabilityOk &= SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.IpStability;
+							//	printf("Chamber[%d]:HandleProcess:Stabilitycheck 4:SE%d:OK=%d\n", ChamberId, i + 1, SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.IpStability);
+							if (SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.IpStability == false)
 							{
-								ChamberState = INF_COOLING_ACTIVE;
-								DigitalOut = COOLING_ACTIVE_FLAG;
-								if( ( GetActualSystemTimeMs( ) - CoolingStartTime >= 
-											( ParamTrimmChamber.ParamTrimmProcess.ParamTrimmingProcess.CoolingTimeActive + ParamTrimmChamber.ParamTrimmProcess.ParamTrimmingProcess.CoolingTimePassive ) * 1000 )	&&
-										( ( DigitalIn &	COOLING_ACTIVE_FLAG ) == COOLING_ACTIVE_FLAG ) )
-								{
-									for( int i = 0; i < CELL_TIEPOINT_COUNT; i++ )
-									{
-										SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.EntireProcessDone = true;
-									}
-									DigitalOut = NONE_FLAG;
-								}
+								SetPartState(i + 1, Rework, NoStability);
+								SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.TrimmingDone = true;
 							}
-							break;
-
-						case 2:
-							float MaxRhh;
-							MaxRhh = 0.0f;
-							for( int i = 0; i < CELL_TIEPOINT_COUNT; i++ )
-							{
-								TrimmCell->GetLastValue( i + 1, IMT_RHh, 0, &Value );
-
-								if( _isnan( Value.Value )	== 0 )
-								{
-									SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.ActRhh = Value.Value;
-									MaxRhh = max( MaxRhh, Value.Value );
-								}
-							}
-
-							printf( "Chamber[%d]:Cooling: Rhh(Max)=%f\n", ChamberId, MaxRhh );
-
-							if( MaxRhh != 0.0f )
-							{
-								if( ( MaxRhh <= ParamTrimmChamber.ParamTrimmProcess.ParamTrimmingProcess.CoolingRhhPasssive ) ||
-										( GetActualSystemTimeMs( ) - CoolingStartTime >= ParamTrimmChamber.ParamTrimmProcess.ParamTrimmingProcess.CoolingTimeoutRhhPasssive * 1000.0f ) )
-								{
-									ChamberState = INF_COOLING_ACTIVE;
-									DigitalOut = COOLING_ACTIVE_FLAG;
-									if( ( ( MaxRhh <= ParamTrimmChamber.ParamTrimmProcess.ParamTrimmingProcess.CoolingRhhActive ) &&
-												( ( DigitalIn &	COOLING_ACTIVE_FLAG ) == COOLING_ACTIVE_FLAG ) ) ||
-											( GetActualSystemTimeMs( ) - CoolingStartTime >= ( ParamTrimmChamber.ParamTrimmProcess.ParamTrimmingProcess.CoolingTimeoutRhhPasssive + ParamTrimmChamber.ParamTrimmProcess.ParamTrimmingProcess.CoolingTimeoutRhhActive ) * 1000 )	)
-									{
-										for( int i = 0; i < CELL_TIEPOINT_COUNT; i++ )
-										{
-											SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.EntireProcessDone = true;
-										}
-										DigitalOut = NONE_FLAG;
-									}
-								}
-							}
-							break;
-
-						default:
-							break;
+						}
 					}
-				Sleep(1000);
+					StabilityStep = 0;
+					StabilityStartTime = 0;
+					ProcessStep = EProcessStep::GasControl;
+				}
+				break;
+
+			}
+
+			break;
+		}
+			//gascontrol
+		case EProcessStep::GasControl:
+		{
+			if (ParamTrimmChamber.ParamRefCell.ParamMainReferenceCell.TestGasOverRef == 1)
+			{
+				GasControl();
+			}
+
+			//save ip from reference 1
+			ReferenceCell->GetLastIpMean(1, 3, &IpRefAct);
+			IpRefBeforeProcess[0] = IpRefAct * 1.0e6f;
+			for (int i = 0; i < CELL_TIEPOINT_COUNT; i++)
+			{
+				SETrimmingValues.SETrimmingValuesTiepoint[i].ResultData.IpRef[0] = IpRefBeforeProcess[0];
+			}
+
+			//save ip from reference 2
+			ReferenceCell->GetLastIpMean(2, 3, &IpRefAct);
+			IpRefBeforeProcess[1] = IpRefAct * 1.0e6f;
+			for (int i = 0; i < CELL_TIEPOINT_COUNT; i++)
+			{
+				SETrimmingValues.SETrimmingValuesTiepoint[i].ResultData.IpRef[1] = IpRefBeforeProcess[1];
+			}
+
+			if ((eProcessType == ProcessType::Ip4Measure2PointUp) ||
+				(eProcessType == ProcessType::Ip4MeasureUNernstControl))
+			{
+				ProcessStep = EProcessStep::StartIPu4Meas;
+			}
+			else
+			{
+				ProcessStep = EProcessStep::CheckDieselQualification;
+			}
+			break;
+		}
+		case EProcessStep::StartIPu4Meas:
+		{
+#if 1
+			long lRet1 = 0;
+			long lRet2 = 0;
+			MCxEvent(LSTestHandle, 2 - 1, 1);
+			MCxEvent(LSTestHandle, 1 - 1, 1);
+			TimerStart = GetActualSystemTimeMs();
+			if (lRet1 ==0 && lRet2 == 0)
+			{
+				ProcessStep = EProcessStep::WaitIPu4MeasDone;
+			}
+#else
+			bEventRefChamber = true;
+			bEventTrimmChamber = true;
+
+			if (bb  && bbb)
+			{
+				ProcessStep = EProcessStep::WaitIPu4MeasDone;
+			}
+#endif
+			break;
+		}
+		case EProcessStep::WaitIPu4MeasDone:
+		{
+			printf( "##TrimmCell->IsSequenceFinished(): %d\n", TrimmCell->IsSequenceFinished() );
+			if (TrimmCell->IsSequenceFinished() ||
+				( GetActualSystemTimeMs() >= (TimerStart + TrimmCell->DurIp4Meas + 40000 /*+1 Sek reserve*/) )
+				)
+			{
+				//printf("TrimmCell->IsSequenceFinished() = %d >= TmerStart %lld\n", TrimmCell->IsSequenceFinished(),  TimerStart + TrimmCell->DurIp4Meas + 3000);
+				bFinished = true;
+				ProcessStep = EProcessStep::CheckBmwQualification;
+			}
+			break;
+		}
+		case EProcessStep::CheckBmwQualification:
+
+			BmwQualification( eProcessType );
+			for (int i = 0; i < CELL_TIEPOINT_COUNT; i++)
+			{
+				SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.TrimmingDone = true;
+			}
+			ProcessStep = EProcessStep::MeasureIPRefAfterTrimming;
+			ChamberState = INF_EMPTY;
+			break;
+		case EProcessStep::CheckDieselQualification:
+			//diesel qualification
+			switch (SETrimmingValues.AssemblyDataCommon.ProcessType)
+			{
+			case 1:
+				//seperation diesel and gasoline 
+				DieselQualification();
+				for (int i = 0; i < CELL_TIEPOINT_COUNT; i++)
+				{
+					SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.TrimmingDone = true;
+				}
+				ProcessStep = EProcessStep::TrimmingFinished;
+				break;
+
+			case 2:
+				//only gasoline
+				ProcessStep = EProcessStep::Trimming;
+				break;
+
+			case 3:
+				//seperation diesel and trimming gasoline
+				DieselQualification();
+				ProcessStep = EProcessStep::Trimming;
 				break;
 
 			default:
-
+				;
 				break;
 
-		}
-		for( int i = 0; i < CELL_TIEPOINT_COUNT; i++ )
-		{
-			if( ( ProcessStep < 11 )/* && ( ProcessStep > 5 )*/ ) 
+			}
+			break;
+
+		case EProcessStep::Trimming:
+			ChamberState = INF_TRIMMING_ACTIVE;
+			TrimmingEntryCheck();
+			ProcessStep = EProcessStep::WaitTrimmingFinished;
+			break;
+
+		case EProcessStep::WaitTrimmingFinished:
+			if (Trimming() == 0)
 			{
-				TrimmCell->GetLastValue( i + 1, IMT_RiAC, 0, &Value );
-				if( _isnan( Value.Value )	== 0 )
+				ProcessStep = EProcessStep::WaitTrimmingFinished;
+			}
+			if (GetActualSystemTimeMs() >= TrimmCell->GetSequenceStartTime() + (ParamTrimmChamber.ParamTrimmProcess.ParamTrimmingProcess.ProcessTimeout * 1000))
+			{
+
+			}
+			break;
+
+		case EProcessStep::TrimmingFinished:
+			ChamberState = INF_TRIMMING_FINISHED;
+			TrimmingEndCheck();
+			ProcessStep = EProcessStep::MeasureIPRefAfterTrimming;
+			break;
+		case EProcessStep::MeasureIPRefAfterTrimming:
+
+			//save ip from reference 1
+			ReferenceCell->GetLastIpMean(1, 3, &IpRefAct);
+			IpRefAfterProcess[0] = IpRefAct * 1.0e6f;
+
+			//save ip from reference 2
+			ReferenceCell->GetLastIpMean(2, 3, &IpRefAct);
+			IpRefAfterProcess[1] = IpRefAct * 1.0e6f;
+
+			if ((eProcessType == ProcessType::Ip4Measure2PointUp) ||
+				(eProcessType == ProcessType::Ip4MeasureUNernstControl))
+			{
+				ProcessStep = EProcessStep::SavePartsJournal;
+			}
+			else
+			{
+				ProcessStep = EProcessStep::Labeling;
+			}
+			
+			break;
+
+		case EProcessStep::Labeling:
+			ChamberState = INF_LABELING;
+			if (ParamTrimmChamber.ParamTrimmProcess.ParamTrimmingProcess.Labeling != 0)
+			{
+				for (int i = 0; i < CELL_TIEPOINT_COUNT; i++)
 				{
-					if( ( Value.Value > ParamTrimmChamber.ParamTrimmCell.ParamMainTrimmingCell.HeatingRiOffset ) &&
-							( Value.Value < 1000.0f ) )
+					if ((SETrimmingValues.SETrimmingValuesTiepoint[i].ResultData.SEPartStatus == Nio) ||
+						(SETrimmingValues.SETrimmingValuesTiepoint[i].ResultData.SEPartStatus == IoDiesel) ||
+						(SETrimmingValues.SETrimmingValuesTiepoint[i].ResultData.SEPartStatus == IoGasoline))
 					{
-						SETrimmingValues.SETrimmingValuesTiepoint[ i ].ProcessData.ActRi = Value.Value - ParamTrimmChamber.ParamTrimmCell.ParamMainTrimmingCell.HeatingRiOffset;
+						GetNewSerialNumberAndCode(SETrimmingValues.SETrimmingValuesTiepoint[i].ResultData.SEPartStatus,
+							&SETrimmingValues.SETrimmingValuesTiepoint[i].ResultData.SerialNumber,
+							SETrimmingValues.SETrimmingValuesTiepoint[i].ResultData.SerialCode);
+
+						float StartX, StartY, Phi;
+						char ChamberIdString[5];
+
+						//write text (serial code)
+						RotatePosition(i + 1, SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.XPosition, SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.YPosition, &StartX, &StartY, NULL);
+						StartX -= 0.79f;
+						StartY -= 1.43f;
+						RotateBackPosition(i + 1, StartX, StartY, &StartX, &StartY, &Phi);
+						if (ComMicroLas->WriteText(SETrimmingValues.SETrimmingValuesTiepoint[i].ResultData.SerialCode,
+							StartX,
+							StartY,
+							SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.ZPosition,
+							Phi + 90.0f,
+							(100.0f / SETrimmingValues.AssemblyDataCommon.AdjustPollutePercent) * ParamTrimmChamber.ParamTrimmProcess.ParamLaser.LaserPower[i] * 2.0f) != 0)
+						{
+							ComPlc->SetErrorCode(GLOBAL_ERROR, FLT_MICROLAS_SCANNER);
+						}
+
+						//write text (global chamber ident)
+						RotatePosition(i + 1, SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.XPosition, SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.YPosition, &StartX, &StartY, NULL);
+						StartX -= 2.10f;
+						StartY += 0.50f;
+						RotateBackPosition(i + 1, StartX, StartY, &StartX, &StartY, &Phi);
+						sprintf_s(ChamberIdString, "%01d", 2 * SETrimmingValues.AssemblyDataCommon.GlobalMachineNumber + SETrimmingValues.AssemblyDataCommon.ChamberNumber - 2);
+						if (ComMicroLas->WriteText(ChamberIdString,
+							StartX,
+							StartY,
+							SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.ZPosition,
+							Phi + 180.0f,
+							(100.0f / SETrimmingValues.AssemblyDataCommon.AdjustPollutePercent) * ParamTrimmChamber.ParamTrimmProcess.ParamLaser.LaserPower[i] * 2.0f))
+						{
+							ComPlc->SetErrorCode(GLOBAL_ERROR, FLT_MICROLAS_SCANNER);
+						}
+
+					}
+				}
+			}
+			ProcessStep = EProcessStep::SavePartsJournal;
+			ChamberState = INF_EMPTY;
+			break;
+		case EProcessStep::SavePartsJournal:
+
+			SavePartsJournal(eProcessType);
+
+			ProcessStep = EProcessStep::CoolingSelection;
+
+			break;
+		case  EProcessStep::CoolingSelection:
+			switch (ParamTrimmChamber.ParamTrimmProcess.ParamTrimmingProcess.CoolingType)
+			{
+			case 0:
+				for (int i = 0; i < CELL_TIEPOINT_COUNT; i++)
+				{
+					SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.EntireProcessDone = true;
+				}
+				ProcessStep = EProcessStep::ProcessFinished;
+				break;
+
+			case 1:
+				CoolingStartTime = GetActualSystemTimeMs();
+				ProcessStep = EProcessStep::StartCoolingActive;
+				break;
+
+			case 2:
+				CoolingStartTime = GetActualSystemTimeMs();
+				ProcessStep = EProcessStep::StartCoolingPassive;
+				break;
+
+			default:
+				ProcessStep = EProcessStep::ProcessFinished;
+				break;
+			}
+			break;
+
+		case EProcessStep::StartCoolingPassive:
+			ChamberState = INF_COOLING_PASSIVE;
+			TrimmCell->StopSequence();
+			Sleep(100);
+			TrimmCell->GenerateAndTransmittSequence(ProcessType::Cooling);
+			Sleep(100);
+			ProcessStep = EProcessStep::StartCoolingActive;
+			break;
+
+		case EProcessStep::StartCoolingActive:
+
+			switch (ParamTrimmChamber.ParamTrimmProcess.ParamTrimmingProcess.CoolingType)
+			{
+			case 0:
+				;
+				break;
+
+			case 1:
+				if (GetActualSystemTimeMs() - CoolingStartTime >= ParamTrimmChamber.ParamTrimmProcess.ParamTrimmingProcess.CoolingTimePassive * 1000)
+				{
+					ChamberState = INF_COOLING_ACTIVE;
+					DigitalOut = COOLING_ACTIVE_FLAG;
+					if ((GetActualSystemTimeMs() - CoolingStartTime >=
+						(ParamTrimmChamber.ParamTrimmProcess.ParamTrimmingProcess.CoolingTimeActive + ParamTrimmChamber.ParamTrimmProcess.ParamTrimmingProcess.CoolingTimePassive) * 1000) &&
+						((DigitalIn & COOLING_ACTIVE_FLAG) == COOLING_ACTIVE_FLAG))
+					{
+						for (int i = 0; i < CELL_TIEPOINT_COUNT; i++)
+						{
+							SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.EntireProcessDone = true;
+						}
+						DigitalOut = NONE_FLAG;
+					}
+				}
+				break;
+
+			case 2:
+				float MaxRhh;
+				MaxRhh = 0.0f;
+				for (int i = 0; i < CELL_TIEPOINT_COUNT; i++)
+				{
+					TrimmCell->GetLastValue(i + 1, IMT_RHh, 0, &Value);
+
+					if (_isnan(Value.Value) == 0)
+					{
+						SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.ActRhh = Value.Value;
+						MaxRhh = max(MaxRhh, Value.Value);
 					}
 				}
 
-				TrimmCell->GetLastValue( i + 1, IMT_IPu, 0, &Value );
-				if( _isnan( Value.Value )	== 0 )
+				printf("Chamber[%d]:Cooling: Rhh(Max)=%f\n", ChamberId, MaxRhh);
+
+				if (MaxRhh != 0.0f)
 				{
-					if( Value.Value != 0.0f )
+					if ((MaxRhh <= ParamTrimmChamber.ParamTrimmProcess.ParamTrimmingProcess.CoolingRhhPasssive) ||
+						(GetActualSystemTimeMs() - CoolingStartTime >= ParamTrimmChamber.ParamTrimmProcess.ParamTrimmingProcess.CoolingTimeoutRhhPasssive * 1000.0f))
 					{
-						SETrimmingValues.SETrimmingValuesTiepoint[ i ].ProcessData.ActIp = IpCorrectionOffsetAndDynamic( IpCorrection( Value.Value ) );
+						ChamberState = INF_COOLING_ACTIVE;
+						DigitalOut = COOLING_ACTIVE_FLAG;
+						if (((MaxRhh <= ParamTrimmChamber.ParamTrimmProcess.ParamTrimmingProcess.CoolingRhhActive) &&
+							((DigitalIn & COOLING_ACTIVE_FLAG) == COOLING_ACTIVE_FLAG)) ||
+							(GetActualSystemTimeMs() - CoolingStartTime >= (ParamTrimmChamber.ParamTrimmProcess.ParamTrimmingProcess.CoolingTimeoutRhhPasssive + ParamTrimmChamber.ParamTrimmProcess.ParamTrimmingProcess.CoolingTimeoutRhhActive) * 1000))
+						{
+							for (int i = 0; i < CELL_TIEPOINT_COUNT; i++)
+							{
+								SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.EntireProcessDone = true;
+							}
+							DigitalOut = NONE_FLAG;
+						}
+					}
+				}
+				break;
+
+			default:
+				break;
+			}
+			Sleep(1000);
+			break;
+
+		default:
+
+			break;
+
+		}
+
+		for (int i = 0; i < CELL_TIEPOINT_COUNT; i++)
+		{
+			if ( ProcessStep < EProcessStep::StartCoolingPassive )
+			{
+				TrimmCell->GetLastValue(i + 1, IMT_RiAC, 0, &Value);
+				if (_isnan(Value.Value) == 0)
+				{
+					if ((Value.Value > ParamTrimmChamber.ParamTrimmCell.ParamMainTrimmingCell.HeatingRiOffset) &&
+						(Value.Value < 1000.0f))
+					{
+						SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.ActRi = Value.Value - ParamTrimmChamber.ParamTrimmCell.ParamMainTrimmingCell.HeatingRiOffset;
 					}
 				}
 
-				ReferenceCell->GetLastValue( 1, IMT_IPu, 0, &Value );
-				if( _isnan( Value.Value )	== 0 )
+				TrimmCell->GetLastValue(i + 1, IMT_IPu, 0, &Value);
+				if (_isnan(Value.Value) == 0)
 				{
-					if( Value.Value != 0.0f )
+					if (Value.Value != 0.0f)
 					{
-						SETrimmingValues.SETrimmingValuesTiepoint[ i ].ProcessData.ActIpRef[0] = Value.Value;
+						SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.ActIp = IpCorrectionOffsetAndDynamic(IpCorrection(Value.Value));
 					}
 				}
 
-				ReferenceCell->GetLastValue( 2, IMT_IPu, 0, &Value );
-				if( _isnan( Value.Value )	== 0 )
+				ReferenceCell->GetLastValue(1, IMT_IPu, 0, &Value);
+				if (_isnan(Value.Value) == 0)
 				{
-					if( Value.Value != 0.0f )
+					if (Value.Value != 0.0f)
 					{
-						SETrimmingValues.SETrimmingValuesTiepoint[ i ].ProcessData.ActIpRef[1] = Value.Value;
+						SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.ActIpRef[0] = Value.Value;
+					}
+				}
+
+				ReferenceCell->GetLastValue(2, IMT_IPu, 0, &Value);
+				if (_isnan(Value.Value) == 0)
+				{
+					if (Value.Value != 0.0f)
+					{
+						SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.ActIpRef[1] = Value.Value;
 					}
 				}
 			}
 
-			if( ProcessStep == 12 )
+			if (ProcessStep == EProcessStep::StartCoolingActive)
 			{
-				TrimmCell->GetLastValue( i + 1, IMT_RHh, 0, &Value );
-				if( _isnan( Value.Value )	== 0 )
+				TrimmCell->GetLastValue(i + 1, IMT_RHh, 0, &Value);
+				if (_isnan(Value.Value) == 0)
 				{
 					SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.ActRhh = Value.Value;
 				}
 			}
 
-			if( ProcessStep > 4 )
+			if (ProcessStep >= EProcessStep::GasControl)
 			{
-				if( abs( ChamberPressureActual - ParamTrimmChamber.ParamTrimmCell.ParamIpMeasurement.PSetpoint ) > ParamTrimmChamber.ParamTrimmCell.ParamIpMeasurement.PMaxAllowedDiff )
+				if (abs(ChamberPressureActual - ParamTrimmChamber.ParamTrimmCell.ParamIpMeasurement.PSetpoint) > ParamTrimmChamber.ParamTrimmCell.ParamIpMeasurement.PMaxAllowedDiff)
 				{
-					SetPartState( i + 1, Nio, PressureOutside  );
-					SETrimmingValues.SETrimmingValuesTiepoint[ i ].ProcessData.TrimmingDone = true;
+					SetPartState(i + 1, Nio, PressureOutside);
+					SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.TrimmingDone = true;
 				}
 
-				if( abs( ChamberFlowActual - ParamTrimmChamber.ParamTrimmCell.ParamIpMeasurement.FlowSetpoint ) > ParamTrimmChamber.ParamTrimmCell.ParamIpMeasurement.FlowMaxAllowedDiff )
+				if (abs(ChamberFlowActual - ParamTrimmChamber.ParamTrimmCell.ParamIpMeasurement.FlowSetpoint) > ParamTrimmChamber.ParamTrimmCell.ParamIpMeasurement.FlowMaxAllowedDiff)
 				{
-					SetPartState( i + 1, Nio, FlowOutside  );
-					SETrimmingValues.SETrimmingValuesTiepoint[ i ].ProcessData.TrimmingDone = true;
-				}	
+					SetPartState(i + 1, Nio, FlowOutside);
+					SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.TrimmingDone = true;
+				}
+			}
+		}
+		break;
+	}
+	case ProcessType::MeasurePositionNormal:  //normal 1 (position normal)
+	{
+		bool NormalDone = true;
+		switch (NormalStep)
+		{
+		case 0:
+			for (int i = 0; i < CELL_TIEPOINT_COUNT; i++)
+			{
+				SENormalValues[i].ResultDataPosition.Status = 0x0000001F;
+
+				TrimmCell->GetLastValue(i + 1, IMT_IPu, 3, &Value);
+				if (_isnan(Value.Value) == 0)
+				{
+					if (Value.Value != 0.0)
+					{
+						SENormalValues[i].ResultDataPosition.IpCont = Round(Value.Value * 1.0e6f, 2);
+						if ((SENormalValues[i].ResultDataPosition.IpCont > 0.2))
+						{
+							SENormalValues[i].ResultDataPosition.Status ^= 0x00000004;
+						}
+					}
+				}
+
+				TrimmCell->GetLastValue(i + 1, IMT_UAPE, 1, &ValueU1);
+				TrimmCell->GetLastValue(i + 1, IMT_IPu, 1, &ValueI1);
+
+				TrimmCell->GetLastValue(i + 1, IMT_UAPE, 2, &ValueU2);
+				TrimmCell->GetLastValue(i + 1, IMT_IPu, 2, &ValueI2);
+
+				if ((_isnan(ValueU1.Value) == 0) &&
+					(_isnan(ValueI1.Value) == 0) &&
+					(_isnan(ValueU2.Value) == 0) &&
+					(_isnan(ValueI2.Value) == 0))
+				{
+					if ((ValueU1.Value != 0.0) &&
+						(ValueI1.Value != 0.0) &&
+						(ValueU2.Value != 0.0) &&
+						(ValueI2.Value != 0.0))
+					{
+						SENormalValues[i].ResultDataPosition.RiDcp = Round((ValueU2.Value - ValueU1.Value) / (ValueI2.Value - ValueI1.Value) * 0.9f, 2);
+						if ((SENormalValues[i].ResultDataPosition.RiDcp >= ParamNormalMeasure.ParamPositionNormal.ChkSensor[i].LowerLimit) &&
+							(SENormalValues[i].ResultDataPosition.RiDcp <= ParamNormalMeasure.ParamPositionNormal.ChkSensor[i].UpperLimit))
+						{
+							SENormalValues[i].ResultDataPosition.Status ^= 0x00000001;
+						}
+					}
+				}
+
+				TrimmCell->GetLastValue(i + 1, IMT_UHS, 1, &ValueU1);
+				TrimmCell->GetLastValue(i + 1, IMT_IH, 1, &ValueI1);
+
+				TrimmCell->GetLastValue(i + 1, IMT_URE, 1, &ValueU2);
+				TrimmCell->GetLastValue(i + 1, IMT_IPr, 1, &ValueI2);
+
+				if ((_isnan(ValueU1.Value) == 0) &&
+					(_isnan(ValueI1.Value) == 0))
+				{
+					if ((ValueU1.Value != 0.0) &&
+						(ValueI1.Value != 0.0))
+					{
+						SENormalValues[i].ResultDataPosition.Rhhot = Round((ValueU1.Value - 0.4f) / ValueI1.Value, 2);
+						if ((SENormalValues[i].ResultDataPosition.Rhhot >= ParamNormalMeasure.ParamPositionNormal.ChkHeater[i].LowerLimit) &&
+							(SENormalValues[i].ResultDataPosition.Rhhot <= ParamNormalMeasure.ParamPositionNormal.ChkHeater[i].UpperLimit))
+						{
+							SENormalValues[i].ResultDataPosition.Status ^= 0x00000010;
+						}
+
+						SENormalValues[i].ResultDataPosition.Ih = Round(ValueI1.Value, 2);
+						if (SENormalValues[i].ResultDataPosition.Ih > 0.001)
+						{
+							SENormalValues[i].ResultDataPosition.Status ^= 0x00000008;
+						}
+					}
+				}
+
+				if ((_isnan(ValueU2.Value) == 0) &&
+					(_isnan(ValueI2.Value) == 0))
+				{
+					if ((ValueU2.Value != 0.0) &&
+						(ValueI2.Value != 0.0))
+					{
+						SENormalValues[i].ResultDataPosition.RiDcn = Round((ValueU2.Value + 0.72f) / ValueI2.Value, 2);
+						if ((SENormalValues[i].ResultDataPosition.RiDcn >= 180.0f) &&
+							(SENormalValues[i].ResultDataPosition.RiDcn <= 280.0f))
+						{
+							SENormalValues[i].ResultDataPosition.Status ^= 0x00000002;
+						}
+
+					}
+				}
+
+				if ((SENormalValues[i].ResultDataPosition.RiDcp != 0.0f) &&
+					(SENormalValues[i].ResultDataPosition.Rhhot != 0.0f) &&
+					(SENormalValues[i].ResultDataPosition.RiDcn != 0.0f))
+				{
+					NormalDone &= true;
+				}
+				else
+				{
+					NormalDone &= false;
+				}
+
 			}
 
+			if ((NormalDone == true) ||
+				(TrimmCell->IsSequenceFinished() == true) ||
+				(GetActualSystemTimeMs() >= TrimmCell->GetSequenceStartTime() + 30.0f * 1000.0f))
+			{
+				NormalStep = 1;
+			}
+			break;
+		case 1:
+			SaveNormalJournal();
+			for (int i = 0; i < CELL_TIEPOINT_COUNT; i++)
+			{
+				SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.EntireProcessDone = true;
+			}
+			NormalStep = 2;
+			break;
+		default:
+			break;
 		}
-		
+		break;
 	}
+	case ProcessType::MeasureHeaterNormal:    //normal 2 (heater normal)
+	{
+		bool NormalDone = true;
+		switch (NormalStep)
+		{
+		case 0:
+			for (int i = 0; i < CELL_TIEPOINT_COUNT; i++)
+			{
+				SENormalValues[i].ResultDataHeater.Status = 0x0000000F;
 
-	if( ProcessNormalActive == true )
+				TrimmCell->GetLastValue(i + 1, IMT_HSCONT, 1, &Value);
+				if (_isnan(Value.Value) == 0)
+				{
+					SENormalValues[i].ResultDataHeater.ContactOk = Value.Value;
+					if (SENormalValues[i].ResultDataHeater.ContactOk == 0.0f)
+					{
+						SENormalValues[i].ResultDataHeater.Status ^= 0x00000001;
+					}
+				}
+
+				TrimmCell->GetLastValue(i + 1, IMT_RHh, 1, &Value);
+				if (_isnan(Value.Value) == 0)
+				{
+					if (Value.Value != 0.0)
+					{
+						SENormalValues[i].ResultDataHeater.Rhhot = Round(Value.Value, 2);
+						if ((SENormalValues[i].ResultDataHeater.Rhhot >= ParamNormalMeasure.ParamHeaterNormal.ChkHeaterResistanceHot.LowerLimit) &&
+							(SENormalValues[i].ResultDataHeater.Rhhot <= ParamNormalMeasure.ParamHeaterNormal.ChkHeaterResistanceHot.UpperLimit))
+						{
+							SENormalValues[i].ResultDataHeater.Status ^= 0x00000008;
+						}
+					}
+				}
+
+				TrimmCell->GetLastValue(i + 1, IMT_IH, 1, &Value);
+				if (_isnan(Value.Value) == 0)
+				{
+					if (Value.Value != 0.0)
+					{
+						SENormalValues[i].ResultDataHeater.Ih = Round(Value.Value, 2);
+						if ((SENormalValues[i].ResultDataHeater.Ih >= ParamNormalMeasure.ParamHeaterNormal.ChkHeaterCurrent.LowerLimit) &&
+							(SENormalValues[i].ResultDataHeater.Ih <= ParamNormalMeasure.ParamHeaterNormal.ChkHeaterCurrent.UpperLimit))
+						{
+							SENormalValues[i].ResultDataHeater.Status ^= 0x00000004;
+						}
+					}
+				}
+
+				TrimmCell->GetLastValue(i + 1, IMT_RHk, 1, &Value);
+				if (_isnan(Value.Value) == 0)
+				{
+					if (Value.Value != 0.0)
+					{
+						SENormalValues[i].ResultDataHeater.RhCold = Round(Value.Value, 2);
+						if ((SENormalValues[i].ResultDataHeater.RhCold >= ParamNormalMeasure.ParamHeaterNormal.ChkHeaterResistanceCold.LowerLimit) &&
+							(SENormalValues[i].ResultDataHeater.RhCold <= ParamNormalMeasure.ParamHeaterNormal.ChkHeaterResistanceCold.UpperLimit))
+						{
+							SENormalValues[i].ResultDataHeater.Status ^= 0x00000002;
+						}
+					}
+				}
+
+				if ((SENormalValues[i].ResultDataHeater.Rhhot != 0.0f) &&
+					(SENormalValues[i].ResultDataHeater.Ih != 0.0f) &&
+					(SENormalValues[i].ResultDataHeater.RhCold != 0.0f))
+				{
+					NormalDone &= true;
+				}
+				else
+				{
+					NormalDone &= false;
+				}
+
+			}
+
+			if ((NormalDone == true) ||
+				(TrimmCell->IsSequenceFinished() == true) ||
+				(GetActualSystemTimeMs() >= TrimmCell->GetSequenceStartTime() + 30.0f * 1000.0f))
+			{
+				NormalStep = 1;
+			}
+
+			break;
+		case 1:
+			SaveNormalJournal();
+			for (int i = 0; i < CELL_TIEPOINT_COUNT; i++)
+			{
+				SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.EntireProcessDone = true;
+			}
+			NormalStep = 2;
+			break;
+		default:
+			break;
+		}
+		break;
+	}
+	case ProcessType::MeasureUniversalNormal: // normal 3 (universal normal)
+	{
+		bool NormalDone = true;
+		switch (NormalStep)
+		{
+		case 0:
+			for (int i = 0; i < CELL_TIEPOINT_COUNT; i++)
+			{
+				SENormalValues[i].ResultDataUniversal.Status = 0x0000003F;
+
+				TrimmCell->GetLastValue(i + 1, IMT_IgRK, 1, &Value);
+				if (_isnan(Value.Value) == 0)
+				{
+					if (Value.Value != 0.0)
+					{
+						SENormalValues[i].ResultDataUniversal.Igrk = Round(Value.Value * 1e6f, 2);
+						if ((SENormalValues[i].ResultDataUniversal.Igrk >= ParamNormalMeasure.ParamUniversalNormal.ChkIgrk.LowerLimit) &&
+							(SENormalValues[i].ResultDataUniversal.Igrk <= ParamNormalMeasure.ParamUniversalNormal.ChkIgrk.UpperLimit))
+						{
+							SENormalValues[i].ResultDataUniversal.Status ^= 0x00000001;
+						}
+					}
+				}
+
+				TrimmCell->GetLastValue(i + 1, IMT_IL, 1, &Value);
+				if (_isnan(Value.Value) == 0)
+				{
+					if (Value.Value != 0.0)
+					{
+						SENormalValues[i].ResultDataUniversal.Il = Round(Value.Value * 1e6f, 2);
+						if ((SENormalValues[i].ResultDataUniversal.Il >= ParamNormalMeasure.ParamUniversalNormal.ChkIl.LowerLimit) &&
+							(SENormalValues[i].ResultDataUniversal.Il <= ParamNormalMeasure.ParamUniversalNormal.ChkIl.UpperLimit))
+						{
+							SENormalValues[i].ResultDataUniversal.Status ^= 0x00000002;
+						}
+					}
+				}
+
+				TrimmCell->GetLastValue(i + 1, IMT_RiDCn, 1, &Value);
+				if (_isnan(Value.Value) == 0)
+				{
+					if (Value.Value != 0.0)
+					{
+						SENormalValues[i].ResultDataUniversal.RiDcn = Round(Value.Value - ParamTrimmChamber.ParamTrimmCell.ParamMainTrimmingCell.HeatingRiOffset, 2);
+						if ((SENormalValues[i].ResultDataUniversal.RiDcn >= ParamNormalMeasure.ParamUniversalNormal.ChkRidc.LowerLimit) &&
+							(SENormalValues[i].ResultDataUniversal.RiDcn <= ParamNormalMeasure.ParamUniversalNormal.ChkRidc.UpperLimit))
+						{
+							SENormalValues[i].ResultDataUniversal.Status ^= 0x00000004;
+						}
+					}
+				}
+
+				TrimmCell->GetLastValue(i + 1, IMT_IpRE, 1, &Value);
+				if (_isnan(Value.Value) == 0)
+				{
+					if (Value.Value != 0.0)
+					{
+						SENormalValues[i].ResultDataUniversal.IpRe = Round(Value.Value * 1.0e6f, 2);
+						if ((SENormalValues[i].ResultDataUniversal.IpRe >= ParamNormalMeasure.ParamUniversalNormal.ChkIpre.LowerLimit) &&
+							(SENormalValues[i].ResultDataUniversal.IpRe <= ParamNormalMeasure.ParamUniversalNormal.ChkIpre.UpperLimit))
+						{
+							SENormalValues[i].ResultDataUniversal.Status ^= 0x00000008;
+						}
+					}
+				}
+
+				TrimmCell->GetLastValue(i + 1, IMT_RiAC, 2, &Value);
+				if (_isnan(Value.Value) == 0)
+				{
+					if (Value.Value != 0.0)
+					{
+						SENormalValues[i].ResultDataUniversal.RiAc = Round(Value.Value - ParamTrimmChamber.ParamTrimmCell.ParamMainTrimmingCell.HeatingRiOffset, 2);
+						if ((SENormalValues[i].ResultDataUniversal.RiAc >= ParamNormalMeasure.ParamUniversalNormal.ChkRiac.LowerLimit) &&
+							(SENormalValues[i].ResultDataUniversal.RiAc <= ParamNormalMeasure.ParamUniversalNormal.ChkRiac.UpperLimit))
+						{
+							SENormalValues[i].ResultDataUniversal.Status ^= 0x00000010;
+						}
+					}
+				}
+
+				TrimmCell->GetLastValue(i + 1, IMT_RiAC, 1, &Value);
+				if (_isnan(Value.Value) == 0)
+				{
+					if (Value.Value != 0.0)
+					{
+						SENormalValues[i].ResultDataUniversal.RiAcstat = Round(Value.Value - ParamTrimmChamber.ParamTrimmCell.ParamMainTrimmingCell.HeatingRiOffset, 2);
+						if ((SENormalValues[i].ResultDataUniversal.RiAcstat >= ParamNormalMeasure.ParamUniversalNormal.ChkRiacStat.LowerLimit) &&
+							(SENormalValues[i].ResultDataUniversal.RiAcstat <= ParamNormalMeasure.ParamUniversalNormal.ChkRiacStat.UpperLimit))
+						{
+							SENormalValues[i].ResultDataUniversal.Status ^= 0x00000020;
+						}
+					}
+				}
+
+				if ((SENormalValues[i].ResultDataUniversal.Igrk != 0.0f) &&
+					(SENormalValues[i].ResultDataUniversal.Il != 0.0f) &&
+					(SENormalValues[i].ResultDataUniversal.RiDcn != 0.0f) &&
+					(SENormalValues[i].ResultDataUniversal.IpRe != 0.0f) &&
+					(SENormalValues[i].ResultDataUniversal.RiAc != 0.0f) &&
+					(SENormalValues[i].ResultDataUniversal.RiAcstat != 0.0f))
+				{
+					NormalDone &= true;
+				}
+				else
+				{
+					NormalDone &= false;
+				}
+
+			}
+
+			if ((NormalDone == true) ||
+				(TrimmCell->IsSequenceFinished() == true) ||
+				(GetActualSystemTimeMs() >= TrimmCell->GetSequenceStartTime() + 30.0f * 1000.0f))
+			{
+				NormalStep = 1;
+			}
+
+			break;
+		case 1:
+			SaveNormalJournal();
+			for (int i = 0; i < CELL_TIEPOINT_COUNT; i++)
+			{
+				SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.EntireProcessDone = true;
+			}
+			NormalStep = 2;
+			break;
+		default:
+			break;
+		}
+		break;
+	}
+	case ProcessType::MeasureUnNormal:	      // normal 4 (un normal)
+	{
+		bool NormalDone = true;
+		switch (NormalStep)
+		{
+		case 0:
+			for (int i = 0; i < CELL_TIEPOINT_COUNT; i++)
+			{
+				SENormalValues[i].ResultDataUn.Status = 0x00000001;
+
+				TrimmCell->GetLastValue(i + 1, IMT_UN, 1, &Value);
+				if (_isnan(Value.Value) == 0)
+				{
+					if (Value.Value != 0.0)
+					{
+						SENormalValues[i].ResultDataUn.Un = Round(Value.Value, 2);
+						if ((SENormalValues[i].ResultDataUn.Un >= ParamNormalMeasure.ParamUnNormal.ChkNernstVoltage.LowerLimit) &&
+							(SENormalValues[i].ResultDataUn.Un <= ParamNormalMeasure.ParamUnNormal.ChkNernstVoltage.UpperLimit))
+						{
+							SENormalValues[i].ResultDataUn.Status ^= 0x00000001;
+						}
+					}
+				}
+
+				if ((SENormalValues[i].ResultDataUn.Un != 0.0f)) {
+					NormalDone &= true;
+				}
+				else
+				{
+					NormalDone &= false;
+				}
+
+			}
+
+			if ((NormalDone == true) ||
+				(TrimmCell->IsSequenceFinished() == true) ||
+				(GetActualSystemTimeMs() >= TrimmCell->GetSequenceStartTime() + 30.0f * 1000.0f))
+			{
+				NormalStep = 1;
+			}
+
+			break;
+		case 1:
+			SaveNormalJournal();
+			for (int i = 0; i < CELL_TIEPOINT_COUNT; i++)
+			{
+				SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.EntireProcessDone = true;
+			}
+			NormalStep = 2;
+			break;
+		default:
+			break;
+		}
+		break;
+	}
+	case ProcessType::MeasureIpNormal:        // normal 5 (ip normal)
+	{
+		bool NormalDone = true;
+		switch (NormalStep)
+		{
+		case 0:
+			for (int i = 0; i < CELL_TIEPOINT_COUNT; i++)
+			{
+				SENormalValues[i].ResultDataIp.Status = 0x00000003;
+
+				TrimmCell->GetLastValue(i + 1, IMT_IPu, 1, &Value);
+				if (_isnan(Value.Value) == 0)
+				{
+					if (Value.Value != 0.0)
+					{
+						SENormalValues[i].ResultDataIp.Ip = Round(Value.Value * 1e6f, 2);
+						if ((SENormalValues[i].ResultDataIp.Ip >= ParamNormalMeasure.ParamIpNormal.ChkIp.LowerLimit) &&
+							(SENormalValues[i].ResultDataIp.Ip <= ParamNormalMeasure.ParamIpNormal.ChkIp.UpperLimit))
+						{
+							SENormalValues[i].ResultDataIp.Status ^= 0x00000002;
+						}
+					}
+				}
+
+				TrimmCell->GetLastValue(i + 1, IMT_UAPE, 1, &Value);
+				if (_isnan(Value.Value) == 0)
+				{
+					if (Value.Value != 0.0)
+					{
+						SENormalValues[i].ResultDataIp.UApe = Round(Value.Value, 2);
+						if ((SENormalValues[i].ResultDataIp.UApe >= ParamNormalMeasure.ParamIpNormal.ChkUp.LowerLimit) &&
+							(SENormalValues[i].ResultDataIp.UApe <= ParamNormalMeasure.ParamIpNormal.ChkUp.UpperLimit))
+						{
+							SENormalValues[i].ResultDataIp.Status ^= 0x00000001;
+						}
+					}
+				}
+
+				if ((SENormalValues[i].ResultDataIp.Ip != 0.0f) &&
+					(SENormalValues[i].ResultDataIp.UApe != 0.0f))
+				{
+					NormalDone &= true;
+				}
+				else
+				{
+					NormalDone &= false;
+				}
+
+			}
+
+			if ((NormalDone == true) ||
+				(TrimmCell->IsSequenceFinished() == true) ||
+				(GetActualSystemTimeMs() >= TrimmCell->GetSequenceStartTime() + 30.0f * 1000.0f))
+			{
+				for (int i = 0; i < CELL_TIEPOINT_COUNT; i++)
+				{
+					printf("Ip[%d]=%f\n", i + 1, SENormalValues[i].ResultDataIp.Ip);
+				}
+				NormalStep = 1;
+			}
+			break;
+
+		case 1:
+			SaveNormalJournal();
+			for (int i = 0; i < CELL_TIEPOINT_COUNT; i++)
+			{
+				SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.EntireProcessDone = true;
+			}
+			NormalStep = 2;
+			break;
+		default:
+			break;
+		}
+		break;
+	}
+	case ProcessType::MeasureIlmNormal:       // normal 6 (ilm normal)
 	{
 		bool NormalDone = true;
 
-		switch( NormalStep )
-		{	
-			case 0:
-				switch ( NormalNumber )
+		switch (NormalStep)
+		{
+		case 0:
+			for (int i = 0; i < CELL_TIEPOINT_COUNT; i++)
+			{
+				SENormalValues[i].ResultDataIlm.Status = 0x000001FF;
+
+				TrimmCell->GetLastValue(i + 1, IMT_IL, 1, &Value);
+				if (_isnan(Value.Value) == 0)
 				{
-					case PositionNormal:
-						for( int i = 0; i < CELL_TIEPOINT_COUNT; i++ )
+					if (Value.Value != 0.0)
+					{
+						SENormalValues[i].ResultDataIlm.Ilm = Round(Value.Value * 1e6f, 2);
+						if ((SENormalValues[i].ResultDataIlm.Ilm >= ParamNormalMeasure.ParamIlmNormal.ChkIlMax.LowerLimit) &&
+							(SENormalValues[i].ResultDataIlm.Ilm <= ParamNormalMeasure.ParamIlmNormal.ChkIlMax.UpperLimit))
 						{
-							SENormalValues[ i ].ResultDataPosition.Status = 0x0000001F; 
-
-							TrimmCell->GetLastValue( i + 1, IMT_IPu, 3, &Value );
-							if( _isnan( Value.Value )	== 0 )
-							{
-								if( Value.Value != 0.0 )
-								{
-									SENormalValues[ i ].ResultDataPosition.IpCont = Round( Value.Value * 1.0e6f, 2);
-									if( ( SENormalValues[ i ].ResultDataPosition.IpCont > 0.2 ) )
-									{
-										SENormalValues[ i ].ResultDataPosition.Status ^= 0x00000004;
-									}
-								}
-							}
-
-							TrimmCell->GetLastValue( i + 1, IMT_UAPE, 1, &ValueU1 );
-							TrimmCell->GetLastValue( i + 1, IMT_IPu, 1, &ValueI1 );
-
-							TrimmCell->GetLastValue( i + 1, IMT_UAPE, 2, &ValueU2 );
-							TrimmCell->GetLastValue( i + 1, IMT_IPu, 2, &ValueI2 );
-
-							if( ( _isnan( ValueU1.Value ) == 0 ) && 
-									( _isnan( ValueI1.Value ) == 0 ) && 
-									( _isnan( ValueU2.Value ) == 0 ) && 
-									( _isnan( ValueI2.Value ) == 0 ) )
-							{
-								if( ( ValueU1.Value != 0.0 ) && 
-										( ValueI1.Value != 0.0 ) && 
-										( ValueU2.Value != 0.0 ) && 
-										( ValueI2.Value != 0.0 ) )
-								{
-									SENormalValues[ i ].ResultDataPosition.RiDcp = Round( ( ValueU2.Value - ValueU1.Value ) / ( ValueI2.Value - ValueI1.Value ) * 0.9f, 2); 
-									if( ( SENormalValues[ i ].ResultDataPosition.RiDcp >= ParamNormalMeasure.ParamPositionNormal.ChkSensor[ i ].LowerLimit ) &&
-											( SENormalValues[ i ].ResultDataPosition.RiDcp <= ParamNormalMeasure.ParamPositionNormal.ChkSensor[ i ].UpperLimit ) )
-									{
-										SENormalValues[ i ].ResultDataPosition.Status ^= 0x00000001;
-									}
-								}
-							}
-
-							TrimmCell->GetLastValue( i + 1, IMT_UHS, 1, &ValueU1 );
-							TrimmCell->GetLastValue( i + 1, IMT_IH, 1, &ValueI1 );
-
-							TrimmCell->GetLastValue( i + 1, IMT_URE, 1, &ValueU2 );
-							TrimmCell->GetLastValue( i + 1, IMT_IPr, 1, &ValueI2 );
-
-							if( ( _isnan( ValueU1.Value ) == 0 ) && 
-									( _isnan( ValueI1.Value ) == 0 ) )
-							{
-								if( ( ValueU1.Value != 0.0 ) && 
-										( ValueI1.Value != 0.0 ) )
-								{
-									SENormalValues[ i ].ResultDataPosition.Rhhot = Round( ( ValueU1.Value - 0.4f ) / ValueI1.Value, 2 ); 
-									if( ( SENormalValues[ i ].ResultDataPosition.Rhhot >= ParamNormalMeasure.ParamPositionNormal.ChkHeater[ i ].LowerLimit ) &&
-											( SENormalValues[ i ].ResultDataPosition.Rhhot <= ParamNormalMeasure.ParamPositionNormal.ChkHeater[ i ].UpperLimit ) )
-									{
-										SENormalValues[ i ].ResultDataPosition.Status ^= 0x00000010;
-									}
-
-									SENormalValues[ i ].ResultDataPosition.Ih = Round( ValueI1.Value, 2 );
-									if( SENormalValues[ i ].ResultDataPosition.Ih > 0.001 )
-									{
-										SENormalValues[ i ].ResultDataPosition.Status ^= 0x00000008;
-									}
-								}
-							}
-
-							if( ( _isnan( ValueU2.Value ) == 0 ) && 
-									( _isnan( ValueI2.Value ) == 0 ) )
-							{
-								if( ( ValueU2.Value != 0.0 ) && 
-										( ValueI2.Value != 0.0 ) )
-								{
-									SENormalValues[ i ].ResultDataPosition.RiDcn = Round( ( ValueU2.Value + 0.72f ) / ValueI2.Value, 2 ); 
-									if( ( SENormalValues[ i ].ResultDataPosition.RiDcn >= 180.0f ) &&
-											( SENormalValues[ i ].ResultDataPosition.RiDcn <= 280.0f ) )
-									{
-										SENormalValues[ i ].ResultDataPosition.Status ^= 0x00000002;
-									}
-
-								}
-							}
-
-							if( ( SENormalValues[ i ].ResultDataPosition.RiDcp != 0.0f ) &&
-									( SENormalValues[ i ].ResultDataPosition.Rhhot != 0.0f ) &&
-									( SENormalValues[ i ].ResultDataPosition.RiDcn != 0.0f ) )
-							{
-								NormalDone &= true;
-							}
-							else
-							{
-								NormalDone &= false;
-							}
-
+							SENormalValues[i].ResultDataIlm.Status ^= 0x00000001;
 						}
-
-						if( ( NormalDone == true ) ||
-								( TrimmCell->IsSequenceFinished() == true ) ||
-								( GetActualSystemTimeMs( ) >= TrimmCell->GetSequenceStartTime() + 30.0f * 1000.0f ) )
-						{
-							NormalStep = 1;
-						}
-						
-
-						break;
-
-					case HeaterNormal:
-						for( int i = 0; i < CELL_TIEPOINT_COUNT; i++ )
-						{
-							SENormalValues[ i ].ResultDataHeater.Status = 0x0000000F; 
-
-							TrimmCell->GetLastValue( i + 1, IMT_HSCONT, 1, &Value );
-							if( _isnan( Value.Value )	== 0 )
-							{
-								SENormalValues[ i ].ResultDataHeater.ContactOk = Value.Value; 
-								if( SENormalValues[ i ].ResultDataHeater.ContactOk == 0.0f )
-								{
-									SENormalValues[ i ].ResultDataHeater.Status ^= 0x00000001;
-								}
-							}
-							
-							TrimmCell->GetLastValue( i + 1, IMT_RHh, 1, &Value );
-							if( _isnan( Value.Value )	== 0 )
-							{
-								if( Value.Value != 0.0 )
-								{
-									SENormalValues[ i ].ResultDataHeater.Rhhot = Round( Value.Value, 2 );
-									if( ( SENormalValues[ i ].ResultDataHeater.Rhhot >= ParamNormalMeasure.ParamHeaterNormal.ChkHeaterResistanceHot.LowerLimit ) &&
-											( SENormalValues[ i ].ResultDataHeater.Rhhot <= ParamNormalMeasure.ParamHeaterNormal.ChkHeaterResistanceHot.UpperLimit ) )
-									{
-										SENormalValues[ i ].ResultDataHeater.Status ^= 0x00000008;
-									}
-								}
-							}
-
-							TrimmCell->GetLastValue( i + 1, IMT_IH, 1, &Value );
-							if( _isnan( Value.Value )	== 0 )
-							{
-								if( Value.Value != 0.0 )
-								{
-									SENormalValues[ i ].ResultDataHeater.Ih = Round( Value.Value, 2 );
-									if( ( SENormalValues[ i ].ResultDataHeater.Ih >= ParamNormalMeasure.ParamHeaterNormal.ChkHeaterCurrent.LowerLimit ) &&
-											( SENormalValues[ i ].ResultDataHeater.Ih <= ParamNormalMeasure.ParamHeaterNormal.ChkHeaterCurrent.UpperLimit ) )
-									{
-										SENormalValues[ i ].ResultDataHeater.Status ^= 0x00000004;
-									}
-								}
-							}
-
-							TrimmCell->GetLastValue( i + 1, IMT_RHk, 1, &Value );
-							if( _isnan( Value.Value )	== 0 )
-							{
-								if( Value.Value != 0.0 )
-								{
-									SENormalValues[ i ].ResultDataHeater.RhCold = Round( Value.Value, 2 );
-									if( ( SENormalValues[ i ].ResultDataHeater.RhCold >= ParamNormalMeasure.ParamHeaterNormal.ChkHeaterResistanceCold.LowerLimit ) &&
-											( SENormalValues[ i ].ResultDataHeater.RhCold <= ParamNormalMeasure.ParamHeaterNormal.ChkHeaterResistanceCold.UpperLimit ) )
-									{
-										SENormalValues[ i ].ResultDataHeater.Status ^= 0x00000002;
-									}
-								}
-							}
-
-							if( ( SENormalValues[ i ].ResultDataHeater.Rhhot != 0.0f ) &&
-									( SENormalValues[ i ].ResultDataHeater.Ih != 0.0f ) &&
-									( SENormalValues[ i ].ResultDataHeater.RhCold != 0.0f ) )
-							{
-								NormalDone &= true;
-							}
-							else
-							{
-								NormalDone &= false;
-							}
-
-						}
-
-						if( ( NormalDone == true ) ||
-								( TrimmCell->IsSequenceFinished() == true ) ||
-								( GetActualSystemTimeMs( ) >= TrimmCell->GetSequenceStartTime() + 30.0f * 1000.0f ) )
-						{
-							NormalStep = 1;
-						}
-
-
-						break;
-
-					case UniversalNormal:
-						for( int i = 0; i < CELL_TIEPOINT_COUNT; i++ )
-						{
-							SENormalValues[ i ].ResultDataUniversal.Status = 0x0000003F; 
-
-							TrimmCell->GetLastValue( i + 1, IMT_IgRK, 1, &Value );
-							if( _isnan( Value.Value )	== 0 )
-							{
-								if( Value.Value != 0.0 )
-								{
-									SENormalValues[ i ].ResultDataUniversal.Igrk = Round( Value.Value * 1e6f, 2 );
-									if( ( SENormalValues[ i ].ResultDataUniversal.Igrk >= ParamNormalMeasure.ParamUniversalNormal.ChkIgrk.LowerLimit ) &&
-											( SENormalValues[ i ].ResultDataUniversal.Igrk <= ParamNormalMeasure.ParamUniversalNormal.ChkIgrk.UpperLimit ) )
-									{
-										SENormalValues[ i ].ResultDataUniversal.Status ^= 0x00000001;
-									}
-								}
-							}
-
-							TrimmCell->GetLastValue( i + 1, IMT_IL, 1, &Value );
-							if( _isnan( Value.Value )	== 0 )
-							{
-								if( Value.Value != 0.0 )
-								{
-									SENormalValues[ i ].ResultDataUniversal.Il = Round( Value.Value * 1e6f, 2 ); 
-									if( ( SENormalValues[ i ].ResultDataUniversal.Il >= ParamNormalMeasure.ParamUniversalNormal.ChkIl.LowerLimit ) &&
-											( SENormalValues[ i ].ResultDataUniversal.Il <= ParamNormalMeasure.ParamUniversalNormal.ChkIl.UpperLimit ) )
-									{
-										SENormalValues[ i ].ResultDataUniversal.Status ^= 0x00000002;
-									}
-								}
-							}
-
-							TrimmCell->GetLastValue( i + 1, IMT_RiDCn, 1, &Value );
-							if( _isnan( Value.Value )	== 0 )
-							{
-								if( Value.Value != 0.0 )
-								{
-									SENormalValues[ i ].ResultDataUniversal.RiDcn = Round( Value.Value - ParamTrimmChamber.ParamTrimmCell.ParamMainTrimmingCell.HeatingRiOffset, 2 ); 
-									if( ( SENormalValues[ i ].ResultDataUniversal.RiDcn >= ParamNormalMeasure.ParamUniversalNormal.ChkRidc.LowerLimit ) &&
-											( SENormalValues[ i ].ResultDataUniversal.RiDcn <= ParamNormalMeasure.ParamUniversalNormal.ChkRidc.UpperLimit ) )
-									{
-										SENormalValues[ i ].ResultDataUniversal.Status ^= 0x00000004;
-									}
-								}
-							}	
-
-							TrimmCell->GetLastValue( i + 1, IMT_IpRE, 1, &Value );
-							if( _isnan( Value.Value )	== 0 )
-							{
-								if( Value.Value != 0.0 )
-								{
-									SENormalValues[ i ].ResultDataUniversal.IpRe = Round( Value.Value * 1.0e6f, 2 ); 
-									if( ( SENormalValues[ i ].ResultDataUniversal.IpRe >= ParamNormalMeasure.ParamUniversalNormal.ChkIpre.LowerLimit ) &&
-											( SENormalValues[ i ].ResultDataUniversal.IpRe <= ParamNormalMeasure.ParamUniversalNormal.ChkIpre.UpperLimit ) )
-									{
-										SENormalValues[ i ].ResultDataUniversal.Status ^= 0x00000008;
-									}
-								}
-							}
-
-							TrimmCell->GetLastValue( i + 1, IMT_RiAC, 2, &Value );
-							if( _isnan( Value.Value )	== 0 )
-							{
-								if( Value.Value != 0.0 )
-								{
-									SENormalValues[ i ].ResultDataUniversal.RiAc = Round( Value.Value - ParamTrimmChamber.ParamTrimmCell.ParamMainTrimmingCell.HeatingRiOffset, 2 ); 
-									if( ( SENormalValues[ i ].ResultDataUniversal.RiAc >= ParamNormalMeasure.ParamUniversalNormal.ChkRiac.LowerLimit ) &&
-											( SENormalValues[ i ].ResultDataUniversal.RiAc <= ParamNormalMeasure.ParamUniversalNormal.ChkRiac.UpperLimit ) )
-									{
-										SENormalValues[ i ].ResultDataUniversal.Status ^= 0x00000010;
-									}
-								}
-							}
-
-							TrimmCell->GetLastValue( i + 1, IMT_RiAC, 1, &Value );
-							if( _isnan( Value.Value )	== 0 )
-							{
-								if( Value.Value != 0.0 )
-								{
-									SENormalValues[ i ].ResultDataUniversal.RiAcstat = Round( Value.Value - ParamTrimmChamber.ParamTrimmCell.ParamMainTrimmingCell.HeatingRiOffset, 2 ); 
-									if( ( SENormalValues[ i ].ResultDataUniversal.RiAcstat >= ParamNormalMeasure.ParamUniversalNormal.ChkRiacStat.LowerLimit ) &&
-											( SENormalValues[ i ].ResultDataUniversal.RiAcstat <= ParamNormalMeasure.ParamUniversalNormal.ChkRiacStat.UpperLimit ) )
-									{
-										SENormalValues[ i ].ResultDataUniversal.Status ^= 0x00000020;
-									}
-								}
-							}
-
-							if( ( SENormalValues[ i ].ResultDataUniversal.Igrk != 0.0f ) &&
-									( SENormalValues[ i ].ResultDataUniversal.Il != 0.0f ) &&
-									( SENormalValues[ i ].ResultDataUniversal.RiDcn != 0.0f ) &&
-									( SENormalValues[ i ].ResultDataUniversal.IpRe != 0.0f ) &&
-									( SENormalValues[ i ].ResultDataUniversal.RiAc != 0.0f ) &&
-									( SENormalValues[ i ].ResultDataUniversal.RiAcstat != 0.0f ) ) 
-							{
-								NormalDone &= true;
-							}
-							else
-							{
-								NormalDone &= false;
-							}
-
-						}
-
-						if( ( NormalDone == true ) ||
-								( TrimmCell->IsSequenceFinished() == true ) ||
-								( GetActualSystemTimeMs( ) >= TrimmCell->GetSequenceStartTime() + 30.0f * 1000.0f ) )
-						{
-							NormalStep = 1;
-						}
-
-
-						break;
-
-					case UnNormal:
-						for( int i = 0; i < CELL_TIEPOINT_COUNT; i++ )
-						{
-							SENormalValues[ i ].ResultDataUn.Status = 0x00000001; 
-
-							TrimmCell->GetLastValue( i + 1, IMT_UN, 1, &Value );
-							if( _isnan( Value.Value )	== 0 )
-							{
-								if( Value.Value != 0.0 )
-								{
-									SENormalValues[ i ].ResultDataUn.Un = Round( Value.Value, 2 ); 
-									if( ( SENormalValues[ i ].ResultDataUn.Un >= ParamNormalMeasure.ParamUnNormal.ChkNernstVoltage.LowerLimit ) &&
-											( SENormalValues[ i ].ResultDataUn.Un <= ParamNormalMeasure.ParamUnNormal.ChkNernstVoltage.UpperLimit ) )
-									{
-										SENormalValues[ i ].ResultDataUn.Status ^= 0x00000001;
-									}
-								}
-							}
-
-							if( ( SENormalValues[ i ].ResultDataUn.Un != 0.0f ) ){
-								NormalDone &= true;
-							}
-							else
-							{
-								NormalDone &= false;
-							}
-
-						}
-
-						if( ( NormalDone == true ) ||
-								( TrimmCell->IsSequenceFinished() == true ) ||
-								( GetActualSystemTimeMs( ) >= TrimmCell->GetSequenceStartTime() + 30.0f * 1000.0f ) )
-						{
-							NormalStep = 1;
-						}
-
-						break;
-
-					case IpNormal:
-						for( int i = 0; i < CELL_TIEPOINT_COUNT; i++ )
-						{
-							SENormalValues[ i ].ResultDataIp.Status = 0x00000003; 
-
-							TrimmCell->GetLastValue( i + 1, IMT_IPu, 1, &Value );
-							if( _isnan( Value.Value )	== 0 )
-							{
-								if( Value.Value != 0.0 )
-								{
-									SENormalValues[ i ].ResultDataIp.Ip = Round( Value.Value * 1e6f, 2 ); 
-									if( ( SENormalValues[ i ].ResultDataIp.Ip >= ParamNormalMeasure.ParamIpNormal.ChkIp.LowerLimit ) &&
-											( SENormalValues[ i ].ResultDataIp.Ip <= ParamNormalMeasure.ParamIpNormal.ChkIp.UpperLimit ) )
-									{
-										SENormalValues[ i ].ResultDataIp.Status ^= 0x00000002;
-									}
-								}
-							}
-
-							TrimmCell->GetLastValue( i + 1, IMT_UAPE, 1, &Value );
-							if( _isnan( Value.Value )	== 0 )
-							{
-								if( Value.Value != 0.0 )
-								{
-									SENormalValues[ i ].ResultDataIp.UApe = Round( Value.Value, 2 );
-									if( ( SENormalValues[ i ].ResultDataIp.UApe >= ParamNormalMeasure.ParamIpNormal.ChkUp.LowerLimit ) &&
-											( SENormalValues[ i ].ResultDataIp.UApe <= ParamNormalMeasure.ParamIpNormal.ChkUp.UpperLimit ) )
-									{
-										SENormalValues[ i ].ResultDataIp.Status ^= 0x00000001;
-									}
-								}
-							}
-
-							if( ( SENormalValues[ i ].ResultDataIp.Ip != 0.0f ) &&
-									( SENormalValues[ i ].ResultDataIp.UApe != 0.0f ) )
-							{
-								NormalDone &= true;
-							}
-							else
-							{
-								NormalDone &= false;
-							}
-
-						}
-
-						if( ( NormalDone == true ) ||
-								( TrimmCell->IsSequenceFinished() == true ) ||
-								( GetActualSystemTimeMs( ) >= TrimmCell->GetSequenceStartTime() + 30.0f * 1000.0f ) )
-						{
-							for( int i = 0; i < CELL_TIEPOINT_COUNT; i++ )
-							{
-								printf("Ip[%d]=%f\n",i+1,SENormalValues[ i ].ResultDataIp.Ip);
-							}
-							NormalStep = 1;
-						}
-						break;
-
-					case IlmNormal:
-						for( int i = 0; i < CELL_TIEPOINT_COUNT; i++ )
-						{
-							SENormalValues[ i ].ResultDataIlm.Status = 0x000001FF; 
-
-							TrimmCell->GetLastValue( i + 1, IMT_IL, 1, &Value );
-							if( _isnan( Value.Value )	== 0 )
-							{
-								if( Value.Value != 0.0 )
-								{
-									SENormalValues[ i ].ResultDataIlm.Ilm = Round( Value.Value * 1e6f, 2 ); 
-									if( ( SENormalValues[ i ].ResultDataIlm.Ilm >= ParamNormalMeasure.ParamIlmNormal.ChkIlMax.LowerLimit ) &&
-											( SENormalValues[ i ].ResultDataIlm.Ilm <= ParamNormalMeasure.ParamIlmNormal.ChkIlMax.UpperLimit ) )
-									{
-										SENormalValues[ i ].ResultDataIlm.Status ^= 0x00000001;
-									}
-								}
-							}
-
-							TrimmCell->GetLastValue( i + 1, IMT_IPr, 1, &Value );
-							if( _isnan( Value.Value )	== 0 )
-							{
-								if( Value.Value != 0.0 )
-								{
-									SENormalValues[ i ].ResultDataIlm.IaIpn = Round( Value.Value * 1.0e3f, 2 ); 
-									if( ( SENormalValues[ i ].ResultDataIlm.IaIpn >= ParamNormalMeasure.ParamIlmNormal.ChkIaIpn.LowerLimit ) &&
-											( SENormalValues[ i ].ResultDataIlm.IaIpn <= ParamNormalMeasure.ParamIlmNormal.ChkIaIpn.UpperLimit ) )
-									{
-										SENormalValues[ i ].ResultDataIlm.Status ^= 0x00000002;
-									}
-								}
-							}
-					
-							TrimmCell->GetLastValue( i + 1, IMT_UAPE, 1, &Value );
-							if( _isnan( Value.Value )	== 0 )
-							{
-								if( Value.Value != 0.0 )
-								{
-									SENormalValues[ i ].ResultDataIlm.UIpn = Round( Value.Value - SENormalValues[ i ].ResultDataIlm.IaIpn / 1.0e3f * ParamTrimmChamber.ParamTrimmCell.ParamMainTrimmingCell.HeatingRiOffset / 2.0f, 2 ); 
-									if( ( SENormalValues[ i ].ResultDataIlm.UIpn >= ParamNormalMeasure.ParamIlmNormal.ChkUIpn.LowerLimit ) &&
-											( SENormalValues[ i ].ResultDataIlm.UIpn <= ParamNormalMeasure.ParamIlmNormal.ChkUIpn.UpperLimit ) )
-									{
-										SENormalValues[ i ].ResultDataIlm.Status ^= 0x00000004;
-									}
-								}
-							}
-
-							TrimmCell->GetLastValue( i + 1, IMT_IPu, 1, &ValueI1 );
-							TrimmCell->GetLastValue( i + 1, IMT_UN, 1, &ValueU1 );
-
-							if( ( _isnan( ValueI1.Value )	== 0 ) && ( _isnan( ValueU1.Value )	== 0 ) )
-							{
-								if( ( ValueI1.Value != 0.0 ) && ( ValueU1.Value != 0.0 ) )
-								{
-									SENormalValues[ i ].ResultDataIlm.Un2 = Round( ValueU1.Value * 1.0e3f + ValueI1.Value / 1.0e3f * ParamTrimmChamber.ParamTrimmCell.ParamMainTrimmingCell.HeatingRiOffset / 2.0f, 2 ) ;  
-									if( ( SENormalValues[ i ].ResultDataIlm.Un2 >= ParamNormalMeasure.ParamIlmNormal.ChkPt3Un2.LowerLimit ) )
-									{
-										SENormalValues[ i ].ResultDataIlm.Status ^= 0x00000010;
-									}
-
-									SENormalValues[ i ].ResultDataIlm.Ip2 = Round( SENormalValues[ i ].ResultDataIlm.Un2 / ( ( ValueU1.Value / ValueI1.Value ) - ParamTrimmChamber.ParamTrimmCell.ParamMainTrimmingCell.HeatingRiOffset / 2.0f ), 2 ); 
-									if( ( SENormalValues[ i ].ResultDataIlm.Ip2 >= ParamNormalMeasure.ParamIlmNormal.ChkPt3Ip2.LowerLimit ) )
-									{
-										SENormalValues[ i ].ResultDataIlm.Status ^= 0x00000008;
-									}
-								}
-							}
-
-							TrimmCell->GetLastValue( i + 1, IMT_IPu, 2, &ValueI1 );
-							TrimmCell->GetLastValue( i + 1, IMT_UN, 2, &ValueU1 );
-
-							if( ( _isnan( ValueI1.Value )	== 0 ) && ( _isnan( ValueU1.Value )	== 0 ) )
-							{
-								if( ( ValueI1.Value != 0.0 ) && ( ValueU1.Value != 0.0 ) )
-								{
-									SENormalValues[ i ].ResultDataIlm.Un3 = Round( ValueU1.Value * 1.0e3f + ValueI1.Value / 1.0e3f * ParamTrimmChamber.ParamTrimmCell.ParamMainTrimmingCell.HeatingRiOffset / 2.0f, 2 ) ;  
-									if( ( SENormalValues[ i ].ResultDataIlm.Un3 >= ParamNormalMeasure.ParamIlmNormal.ChkPt3Un3.LowerLimit ) )
-									{
-										SENormalValues[ i ].ResultDataIlm.Status ^= 0x00000040;
-									}
-
-									SENormalValues[ i ].ResultDataIlm.Ip3 = Round( SENormalValues[ i ].ResultDataIlm.Un3 / ( ( ValueU1.Value / ValueI1.Value ) - ParamTrimmChamber.ParamTrimmCell.ParamMainTrimmingCell.HeatingRiOffset / 2.0f ), 2 ); 
-									SENormalValues[ i ].ResultDataIlm.Status ^= 0x00000020;
-								}
-
-							}
-
-							TrimmCell->GetLastValue( i + 1, IMT_IPu, 3, &ValueI1 );
-							TrimmCell->GetLastValue( i + 1, IMT_UN, 3, &ValueU1 );
-
-							if( ( _isnan( ValueI1.Value )	== 0 ) && ( _isnan( ValueU1.Value )	== 0 ) )
-							{
-								if( ( ValueI1.Value != 0.0 ) && ( ValueU1.Value != 0.0 ) )
-								{
-									SENormalValues[ i ].ResultDataIlm.Un4 = Round( ValueU1.Value * 1.0e3f + ValueI1.Value / 1.0e3f * ParamTrimmChamber.ParamTrimmCell.ParamMainTrimmingCell.HeatingRiOffset / 2.0f, 2 ) ;  
-									if( ( SENormalValues[ i ].ResultDataIlm.Un4 >= ParamNormalMeasure.ParamIlmNormal.ChkPt3Un4.LowerLimit ) )
-									{
-										SENormalValues[ i ].ResultDataIlm.Status ^= 0x00000100;
-									}
-
-									SENormalValues[ i ].ResultDataIlm.Ip4 = Round( SENormalValues[ i ].ResultDataIlm.Un4 / ( ( ValueU1.Value / ValueI1.Value ) - ParamTrimmChamber.ParamTrimmCell.ParamMainTrimmingCell.HeatingRiOffset / 2.0f ), 2 ); 
-									if( ( SENormalValues[ i ].ResultDataIlm.Ip4 >= ParamNormalMeasure.ParamIlmNormal.ChkPt3Ip4.LowerLimit ) )
-									{
-										SENormalValues[ i ].ResultDataIlm.Status ^= 0x00000080;
-									}
-								}
-							}
-
-							if( ( SENormalValues[ i ].ResultDataIlm.Ilm != 0.0f ) &&
-									( SENormalValues[ i ].ResultDataIlm.IaIpn != 0.0f ) &&
-									( SENormalValues[ i ].ResultDataIlm.UIpn != 0.0f ) &&
-									( SENormalValues[ i ].ResultDataIlm.Ip2 != 0.0f ) &&
-									( SENormalValues[ i ].ResultDataIlm.Un2 != 0.0f ) &&
-									( SENormalValues[ i ].ResultDataIlm.Ip3 != 0.0f ) &&
-									( SENormalValues[ i ].ResultDataIlm.Un3 != 0.0f ) &&
-									( SENormalValues[ i ].ResultDataIlm.Ip4 != 0.0f ) &&
-									( SENormalValues[ i ].ResultDataIlm.Un4 != 0.0f ) ) {
-								NormalDone &= true;
-							}
-							else
-							{
-								NormalDone &= false;
-							}
-
-						}
-
-						if( ( NormalDone == true ) ||
-								( TrimmCell->IsSequenceFinished() == true ) ||
-								( GetActualSystemTimeMs( ) >= TrimmCell->GetSequenceStartTime() + 30.0f * 1000.0f ) )
-						{
-							NormalStep = 1;
-						}
-
-
-						break;
-
-					default:
-						;
-						break;
+					}
 				}
 
-				break;
-
-			case 1:
-				SaveNormalJournal( );
-				for( int i = 0; i < CELL_TIEPOINT_COUNT; i++ )
+				TrimmCell->GetLastValue(i + 1, IMT_IPr, 1, &Value);
+				if (_isnan(Value.Value) == 0)
 				{
-					SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.EntireProcessDone = true;
+					if (Value.Value != 0.0)
+					{
+						SENormalValues[i].ResultDataIlm.IaIpn = Round(Value.Value * 1.0e3f, 2);
+						if ((SENormalValues[i].ResultDataIlm.IaIpn >= ParamNormalMeasure.ParamIlmNormal.ChkIaIpn.LowerLimit) &&
+							(SENormalValues[i].ResultDataIlm.IaIpn <= ParamNormalMeasure.ParamIlmNormal.ChkIaIpn.UpperLimit))
+						{
+							SENormalValues[i].ResultDataIlm.Status ^= 0x00000002;
+						}
+					}
 				}
-				NormalStep = 2;
-				break;
 
-			default:
-				break;
+				TrimmCell->GetLastValue(i + 1, IMT_UAPE, 1, &Value);
+				if (_isnan(Value.Value) == 0)
+				{
+					if (Value.Value != 0.0)
+					{
+						SENormalValues[i].ResultDataIlm.UIpn = Round(Value.Value - SENormalValues[i].ResultDataIlm.IaIpn / 1.0e3f * ParamTrimmChamber.ParamTrimmCell.ParamMainTrimmingCell.HeatingRiOffset / 2.0f, 2);
+						if ((SENormalValues[i].ResultDataIlm.UIpn >= ParamNormalMeasure.ParamIlmNormal.ChkUIpn.LowerLimit) &&
+							(SENormalValues[i].ResultDataIlm.UIpn <= ParamNormalMeasure.ParamIlmNormal.ChkUIpn.UpperLimit))
+						{
+							SENormalValues[i].ResultDataIlm.Status ^= 0x00000004;
+						}
+					}
+				}
+
+				TrimmCell->GetLastValue(i + 1, IMT_IPu, 1, &ValueI1);
+				TrimmCell->GetLastValue(i + 1, IMT_UN, 1, &ValueU1);
+
+				if ((_isnan(ValueI1.Value) == 0) && (_isnan(ValueU1.Value) == 0))
+				{
+					if ((ValueI1.Value != 0.0) && (ValueU1.Value != 0.0))
+					{
+						SENormalValues[i].ResultDataIlm.Un2 = Round(ValueU1.Value * 1.0e3f + ValueI1.Value / 1.0e3f * ParamTrimmChamber.ParamTrimmCell.ParamMainTrimmingCell.HeatingRiOffset / 2.0f, 2);
+						if ((SENormalValues[i].ResultDataIlm.Un2 >= ParamNormalMeasure.ParamIlmNormal.ChkPt3Un2.LowerLimit))
+						{
+							SENormalValues[i].ResultDataIlm.Status ^= 0x00000010;
+						}
+
+						SENormalValues[i].ResultDataIlm.Ip2 = Round(SENormalValues[i].ResultDataIlm.Un2 / ((ValueU1.Value / ValueI1.Value) - ParamTrimmChamber.ParamTrimmCell.ParamMainTrimmingCell.HeatingRiOffset / 2.0f), 2);
+						if ((SENormalValues[i].ResultDataIlm.Ip2 >= ParamNormalMeasure.ParamIlmNormal.ChkPt3Ip2.LowerLimit))
+						{
+							SENormalValues[i].ResultDataIlm.Status ^= 0x00000008;
+						}
+					}
+				}
+
+				TrimmCell->GetLastValue(i + 1, IMT_IPu, 2, &ValueI1);
+				TrimmCell->GetLastValue(i + 1, IMT_UN, 2, &ValueU1);
+
+				if ((_isnan(ValueI1.Value) == 0) && (_isnan(ValueU1.Value) == 0))
+				{
+					if ((ValueI1.Value != 0.0) && (ValueU1.Value != 0.0))
+					{
+						SENormalValues[i].ResultDataIlm.Un3 = Round(ValueU1.Value * 1.0e3f + ValueI1.Value / 1.0e3f * ParamTrimmChamber.ParamTrimmCell.ParamMainTrimmingCell.HeatingRiOffset / 2.0f, 2);
+						if ((SENormalValues[i].ResultDataIlm.Un3 >= ParamNormalMeasure.ParamIlmNormal.ChkPt3Un3.LowerLimit))
+						{
+							SENormalValues[i].ResultDataIlm.Status ^= 0x00000040;
+						}
+
+						SENormalValues[i].ResultDataIlm.Ip3 = Round(SENormalValues[i].ResultDataIlm.Un3 / ((ValueU1.Value / ValueI1.Value) - ParamTrimmChamber.ParamTrimmCell.ParamMainTrimmingCell.HeatingRiOffset / 2.0f), 2);
+						SENormalValues[i].ResultDataIlm.Status ^= 0x00000020;
+					}
+
+				}
+
+				TrimmCell->GetLastValue(i + 1, IMT_IPu, 3, &ValueI1);
+				TrimmCell->GetLastValue(i + 1, IMT_UN, 3, &ValueU1);
+
+				if ((_isnan(ValueI1.Value) == 0) && (_isnan(ValueU1.Value) == 0))
+				{
+					if ((ValueI1.Value != 0.0) && (ValueU1.Value != 0.0))
+					{
+						SENormalValues[i].ResultDataIlm.Un4 = Round(ValueU1.Value * 1.0e3f + ValueI1.Value / 1.0e3f * ParamTrimmChamber.ParamTrimmCell.ParamMainTrimmingCell.HeatingRiOffset / 2.0f, 2);
+						if ((SENormalValues[i].ResultDataIlm.Un4 >= ParamNormalMeasure.ParamIlmNormal.ChkPt3Un4.LowerLimit))
+						{
+							SENormalValues[i].ResultDataIlm.Status ^= 0x00000100;
+						}
+
+						SENormalValues[i].ResultDataIlm.Ip4 = Round(SENormalValues[i].ResultDataIlm.Un4 / ((ValueU1.Value / ValueI1.Value) - ParamTrimmChamber.ParamTrimmCell.ParamMainTrimmingCell.HeatingRiOffset / 2.0f), 2);
+						if ((SENormalValues[i].ResultDataIlm.Ip4 >= ParamNormalMeasure.ParamIlmNormal.ChkPt3Ip4.LowerLimit))
+						{
+							SENormalValues[i].ResultDataIlm.Status ^= 0x00000080;
+						}
+					}
+				}
+
+				if ((SENormalValues[i].ResultDataIlm.Ilm != 0.0f) &&
+					(SENormalValues[i].ResultDataIlm.IaIpn != 0.0f) &&
+					(SENormalValues[i].ResultDataIlm.UIpn != 0.0f) &&
+					(SENormalValues[i].ResultDataIlm.Ip2 != 0.0f) &&
+					(SENormalValues[i].ResultDataIlm.Un2 != 0.0f) &&
+					(SENormalValues[i].ResultDataIlm.Ip3 != 0.0f) &&
+					(SENormalValues[i].ResultDataIlm.Un3 != 0.0f) &&
+					(SENormalValues[i].ResultDataIlm.Ip4 != 0.0f) &&
+					(SENormalValues[i].ResultDataIlm.Un4 != 0.0f)) {
+					NormalDone &= true;
+				}
+				else
+				{
+					NormalDone &= false;
+				}
+
+			}
+
+			if ((NormalDone == true) ||
+				(TrimmCell->IsSequenceFinished() == true) ||
+				(GetActualSystemTimeMs() >= TrimmCell->GetSequenceStartTime() + 30.0f * 1000.0f))
+			{
+				NormalStep = 1;
+			}
+
+
+			break;
+		case 1:
+			SaveNormalJournal();
+			for (int i = 0; i < CELL_TIEPOINT_COUNT; i++)
+			{
+				SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.EntireProcessDone = true;
+			}
+			NormalStep = 2;
+			break;
+
+		default:
+			break;
+
 		}
 	}
-}	
+	default:
+		break;
+	}
+}
 
 /*-------------------------------------------------------------------------------------------------------------------------*
  * function name        : bool ChamberAllCellsReady( void )                                                                *
@@ -1314,12 +1475,15 @@ int SETrimmingChamber::GasControl( void )
 
 	bool GasControlOk = true;
 
-	#ifndef REF_SIMULATION
+#if defined (REF_SIMULATION)
+	printf("FEF_SIMULATION: No gas control");
+#else
 	ReferenceCell->GetLastIpMean(1,3,&IpAct);
 	printf( "Chamber[%d]:Gaskontrolle:IpRef1[uA]=%f\n", ChamberId, IpAct * 1.0e6f );
 	IpDiff = abs( ( IpAct / ( ParamStationTrimmChamber.ParamStationRefCell.ParamStationMainReferenceCell.IpSetpointRef[0] / 1.0e6f ) - 1.0f ) * 100.0f );
 	if( IpDiff > ParamTrimmChamber.ParamRefCell.ParamMainReferenceCell.AllowableIpVariation )
 	{
+		printf("1: Gas control niO!\n");
 		GasControlOk = false;
 	}
 
@@ -1328,15 +1492,17 @@ int SETrimmingChamber::GasControl( void )
 	IpDiff = abs( ( IpAct / ( ParamStationTrimmChamber.ParamStationRefCell.ParamStationMainReferenceCell.IpSetpointRef[1] / 1.0e6f ) - 1.0f ) * 100.0f );
 	if( IpDiff > ParamTrimmChamber.ParamRefCell.ParamMainReferenceCell.AllowableIpVariation )
 	{
+		printf("2: Gas control niO!\n");
 		GasControlOk = false;
 	}
-	#endif
+#endif
 
 	for( int i = 0; i < CELL_TIEPOINT_COUNT; i++ )
 	{
 		SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.GasControlOk = GasControlOk;
 		if( GasControlOk == false )
 		{
+			printf("3: Gas control niO!\n");
 			SetPartState( i + 1, Rework, GasControlFault );
 			SETrimmingValues.SETrimmingValuesTiepoint[ i ].ProcessData.TrimmingDone = true;
 		}
@@ -1345,6 +1511,265 @@ int SETrimmingChamber::GasControl( void )
 	return RetVal;
 }
 
+void SETrimmingChamber::BmwQualification(ProcessType eType)
+{
+	SEValueInfo Value;
+
+	// Auswertung 
+	for (int iPartNo = 0; iPartNo < CELL_TIEPOINT_COUNT; iPartNo++)
+	{
+		float fTempVal = 0;
+		SetPartState(iPartNo + 1, IoDiesel);
+
+		//contacting test heater side and sensor side ok?
+		SETrimmingValues.SETrimmingValuesTiepoint[iPartNo].ProcessData.ContactOk = TrimmCell->IsContactingOk(iPartNo + 1);
+
+		if (SETrimmingValues.SETrimmingValuesTiepoint[iPartNo].ProcessData.ContactOk == false)
+		{
+			SetPartState(iPartNo + 1, Rework, ContactRiStabilityNok);
+		}
+
+		//?? Ende der Messung für PLC --> wenn bei allen True, dann wird die Kammper geöffnet
+		// -> beide Flags setzen, damit sich Kammer öffnet
+
+		//Zu früh!!!	SETrimmingValues.SETrimmingValuesTiepoint[iPartNo].ProcessData.EntireProcessDone = true;
+
+		// IPu4:
+		if (eType == ProcessType::Ip4Measure2PointUp)
+		{
+			TrimmCell->GetLastValue(iPartNo + 1, IMT_IPu, 101, &Value);
+			float fIPu1 = Value.Value;
+			TrimmCell->GetLastValue(iPartNo + 1, IMT_IPu, 102, &Value);
+			float fIPu2 = Value.Value;
+			TrimmCell->GetLastValue(iPartNo + 1, IMT_URE, 101, &Value);
+			float fUNernst1 = Value.Value;
+			TrimmCell->GetLastValue(iPartNo + 1, IMT_URE, 102, &Value);
+			float fUNernst2 = Value.Value;
+
+			Value.Value = (fIPu1 + ((fIPu2 - fIPu1) / (fUNernst2 - fUNernst1)) * (0.450f - fUNernst1));
+		}
+		else
+		{
+			TrimmCell->GetLastValue(iPartNo + 1, IMT_IPu, 100, &Value);
+		}
+
+		printf("IP4: IMT_IPu, 100: %f\n", Value.Value * 1e6f);
+		if (_isnan(Value.Value) == 0)
+		{
+			if (Value.Value != 0.0f)
+			{
+				float fLowerLimit = 1400.0f; //µA // = ParamTrimmChamber.ParamTrimmProcess.ParamDieselQualification.IpSelectionLowerLimit
+				float fUpperLimit = 1572.0f; //µA // = ParamTrimmChamber.ParamTrimmProcess.ParamDieselQualification.IpSelectionUpperLimit 
+				if (!CheckBounds(Value.Value * 1.0e6f, fLowerLimit, fUpperLimit))
+				{
+					SetPartState(iPartNo + 1, Rework, IpOutsideLimit);
+				}
+
+				SETrimmingValues.SETrimmingValuesTiepoint[iPartNo].ProcessData.IpEndCheck = IpCorrectionOffsetAndDynamic(IpCorrection(Value.Value), false) * 1e6f;
+				//	SETrimmingValues.SETrimmingValuesTiepoint[iPartNo].ProcessData.IpEndCheck = SETrimmingValues.SETrimmingValuesTiepoint[iPartNo].ProcessData.IpEndCheck;
+				// SETrimmingValues.SETrimmingValuesTiepoint[iPartNo].ProcessData.IpEndCheck *= ParamTrimmChamber.ParamTrimmProcess.ParamDieselQualification.ScaleFactorIp;
+					//copy IP4 value in result structure for PLC
+				SETrimmingValues.SETrimmingValuesTiepoint[iPartNo].ResultData.IpEndCheck = SETrimmingValues.SETrimmingValuesTiepoint[iPartNo].ProcessData.IpEndCheck;
+			}
+		}
+		else
+		{
+			SetPartState(iPartNo + 1, Rework, ValueNotPlausible);
+		}
+
+		// APE voltage during IPu4 
+		if (eType == ProcessType::Ip4Measure2PointUp)
+		{
+			TrimmCell->GetLastValue(iPartNo + 1, IMT_IPu, 101, &Value);
+			float fIPu1 = Value.Value;
+			TrimmCell->GetLastValue(iPartNo + 1, IMT_IPu, 102, &Value);
+			float fIPu2 = Value.Value;
+			TrimmCell->GetLastValue(iPartNo + 1, IMT_URE, 101, &Value);
+			float fUNernst1 = Value.Value;
+			TrimmCell->GetLastValue(iPartNo + 1, IMT_URE, 102, &Value);
+			float fUNernst2 = Value.Value;
+			TrimmCell->GetLastValue(iPartNo + 1, IMT_UAPE, 101, &Value);
+			float fUape1 = Value.Value;
+			TrimmCell->GetLastValue(iPartNo + 1, IMT_UAPE, 102, &Value);
+			float fUape2 = Value.Value;
+
+			Value.Value = (fUape1 + ((fUape2 - fUape1) / (fUNernst2 - fUNernst1)) * (0.450f - fUNernst1));
+		}
+		else
+		{
+			TrimmCell->GetLastValue(iPartNo + 1, IMT_UAPE, 100, &Value);
+		}
+		printf("UAPE(IP4): IMT_UAPE, 100: %f\n", Value.Value * 1e3f);
+		if (_isnan(Value.Value) == 0)
+		{
+			if (Value.Value != 0.0f)
+			{
+				float fLowerLimit = 0.0f; //mV 
+				float fUpperLimit = 1800; // = ParamTrimmChamber.ParamTrimmProcess.ParamDieselQualification.xxx 
+
+				if (!CheckBounds(Value.Value * 1.0e3f, fLowerLimit, fUpperLimit))
+				{
+					SetPartState(iPartNo + 1, Rework, UApeOutsideLimit);
+				}
+				SETrimmingValues.SETrimmingValuesTiepoint[iPartNo].ProcessData.fUApeAtIPu4 = Value.Value * 1e3f;
+			}
+		}
+		else
+		{
+			SetPartState(iPartNo + 1, Rework, ValueNotPlausible);
+		}
+
+
+		// Nernst voltage (target value)
+		TrimmCell->GetLastValue(iPartNo + 1, IMT_URE, 100, &Value);
+		printf("UN: IMT_URE, 100: %f\n", Value.Value * 1e3f);
+		if (_isnan(Value.Value) == 0)
+		{
+			if (Value.Value != 0.0f)
+			{
+				float fLowerLimit = 425.0f; //mV // = ParamTrimmChamber.ParamTrimmProcess.ParamDieselQualification.UNernstVolteMin 
+				float fUpperLimit = 475.0f; //mV //  = ParamTrimmChamber.ParamTrimmProcess.ParamDieselQualification.UNernstVolteMax
+
+				if (!CheckBounds(Value.Value * 1.0e3f, fLowerLimit, fUpperLimit))
+				{
+					SetPartState(iPartNo + 1, Rework, UNernstOutsideLimit);
+				}
+				SETrimmingValues.SETrimmingValuesTiepoint[iPartNo].ProcessData.fUNernst = Value.Value * 1e3f;
+			}
+		}
+		else
+		{
+			SetPartState(iPartNo + 1, Rework, ValueNotPlausible);
+		}
+
+		//IPref
+		TrimmCell->GetLastValue(iPartNo + 1, IMT_IpRE, 100, &Value);
+		printf("IPRef: IMT_IpRE, 100: %f\n", Value.Value * 1e6f);
+		if (_isnan(Value.Value) == 0)
+		{
+			if (Value.Value != 0.0f)
+			{
+				float fLowerLimit = 15.0f; //µA //  = ParamTrimmChamber.ParamTrimmProcess.ParamDieselQualification.xxx
+				float fUpperLimit = 25.0f; //µA 
+
+				if (!CheckBounds(Value.Value * 1.0e6f, fLowerLimit, fUpperLimit))
+				{
+					SetPartState(iPartNo + 1, Rework, IpReRefOutsideLimit);
+				}
+				SETrimmingValues.SETrimmingValuesTiepoint[iPartNo].ProcessData.fIRe = Value.Value * 1e6f;
+			}
+		}
+		else
+		{
+			SetPartState(iPartNo + 1, Rework, ValueNotPlausible);
+		}
+
+
+		//UHMax
+		TrimmCell->GetLastValue(iPartNo + 1, IMT_UHmax, 100, &Value);
+		printf("UHmax: IMT_UHmax, 100: %f\n", Value.Value);
+		if (_isnan(Value.Value) == 0)
+		{
+			if (Value.Value != 0.0f)
+			{
+				float fLowerLimit = 0.0f;  //V
+				float fUpperLimit = 12.0f; //V 
+
+				if (!CheckBounds(Value.Value, fLowerLimit, fUpperLimit))
+				{
+					SetPartState(iPartNo + 1, Rework, UHeaterOutsideLimit);
+				}
+				SETrimmingValues.SETrimmingValuesTiepoint[iPartNo].ProcessData.fUhMax = Value.Value;
+			}
+		}
+		else
+		{
+			SetPartState(iPartNo + 1, Rework, ValueNotPlausible);
+		}
+
+
+		//check Rhh value for diesel qualification
+		TrimmCell->GetLastValue(iPartNo + 1, IMT_RHh, 0, &Value);
+
+		if (_isnan(Value.Value) == 0)
+		{
+			float fLowerLimit = ParamTrimmChamber.ParamTrimmCell.ParamIpMeasurement.RhhLowerLimit;  //V
+			float fUpperLimit = ParamTrimmChamber.ParamTrimmCell.ParamIpMeasurement.RhhUpperLimit; //V 
+			if (!CheckBounds(Value.Value, fLowerLimit, fUpperLimit))
+			{
+				printf("Chamber[%d]:SE%d:Rhh=%f\n", ChamberId, iPartNo + 1, Value.Value);
+				SetPartState(iPartNo + 1, Rework);
+			}
+		}
+		else
+		{
+			SETrimmingValues.SETrimmingValuesTiepoint[iPartNo].ProcessData.TrimmingDone = true;
+			SetPartState(iPartNo + 1, Rework, ValueNotPlausible);
+		}
+
+		//check Ph value for diesel qualification
+		TrimmCell->GetLastValue(iPartNo + 1, IMT_PH, 0, &Value);
+
+		if (_isnan(Value.Value) == 0)
+		{
+			float fLowerLimit = ParamTrimmChamber.ParamTrimmCell.ParamIpMeasurement.PhLowerLimit; //V
+			float fUpperLimit = ParamTrimmChamber.ParamTrimmCell.ParamIpMeasurement.PhUpperLimit; //V 
+			if (!CheckBounds(Value.Value, fLowerLimit, fUpperLimit))
+			{
+				printf("Chamber[%d]:SE%d:Ph=%f\n", ChamberId, iPartNo + 1, Value.Value);
+				SetPartState(iPartNo + 1, Rework);
+			}
+		}
+		else
+		{
+			SETrimmingValues.SETrimmingValuesTiepoint[iPartNo].ProcessData.TrimmingDone = true;
+			SetPartState(iPartNo + 1, Rework, ValueNotPlausible);
+		}
+
+		TrimmCell->GetLastValue(iPartNo + 1, IMT_RiMin, 0, &Value);
+
+		if (_isnan(Value.Value) == 0)
+		{
+			float fLowerLimit = 303.0f; //Ohm
+			float fUpperLimit = 311.0f;//Ohm
+				if (!CheckBounds(Value.Value, fLowerLimit, fUpperLimit))
+				{
+					printf("Chamber[%d]:SE%d:RiMin=%f\n", ChamberId, iPartNo + 1, Value.Value);
+					SetPartState(iPartNo + 1, Rework);
+				}
+		}
+		else
+		{
+			SETrimmingValues.SETrimmingValuesTiepoint[iPartNo].ProcessData.TrimmingDone = true;
+			SetPartState(iPartNo + 1, Rework, ValueNotPlausible);
+		}
+
+
+		TrimmCell->GetLastValue(iPartNo + 1, IMT_RiMax, 0, &Value);
+
+		if (_isnan(Value.Value) == 0)
+		{
+			float fLowerLimit = 303.0f; //Ohm
+			float fUpperLimit = 311.0f; //Ohm
+			if (!CheckBounds(Value.Value, fLowerLimit, fUpperLimit))
+			{
+				printf("Chamber[%d]:SE%d:RiMin=%f\n", ChamberId, iPartNo + 1, Value.Value);
+				SetPartState(iPartNo + 1, Rework);
+			}
+		}
+		else
+		{
+			SETrimmingValues.SETrimmingValuesTiepoint[iPartNo].ProcessData.TrimmingDone = true;
+			SetPartState(iPartNo + 1, Rework, ValueNotPlausible);
+		}
+
+		SETrimmingValues.SETrimmingValuesTiepoint[iPartNo].ProcessData.TrimmingDone = true;
+#if defined _INDUTRON_PRINT_MORE
+		printf("##TrimmCell->IsSequenceFinished() %d\n", TrimmCell->IsSequenceFinished());
+		printf("##Fertig!\n");
+#endif
+	}
+}
 /*-------------------------------------------------------------------------------------------------------------------------*
  * function name        : int DieselQualification( void )                                                                  *
  *                                                                                                                         *
@@ -1700,8 +2125,11 @@ int SETrimmingChamber::TrimmingEndCheck( void )
  *                                                                                                                         *
  * description:         : This is the function to save the statistics to local hard disc.                                  *
  *-------------------------------------------------------------------------------------------------------------------------*/
-int SETrimmingChamber::SavePartsJournal( void )
+int SETrimmingChamber::SavePartsJournal( ProcessType Type )
 {
+#if defined _INDUTRON_PRINT_MORE
+	printf("##SavePartsJournal( %d )\n", Type);
+#endif
 	int RetVal = 0;
 	FILE *JournalDataFile = NULL;
 	char TempString[255];
@@ -1745,96 +2173,127 @@ int SETrimmingChamber::SavePartsJournal( void )
 			if( JournalDataFile == NULL )
 			{
 				fopen_s( &JournalDataFile, TempString, "a+" );
-				if( JournalDataFile != NULL )
+				if (JournalDataFile != NULL)
 				{
-					#ifdef LOGGING_OLD_FORMAT
-					fprintf_s( JournalDataFile, "Typ;Chargennr;Code;Seriennummer;WT-Nr;WT-Pos;Datum Uhrzeit;Kammer;Ref1;"
-																			"Ref2;Breite;Länge;Spalt;Vorhalt fein;Startabst grob;Startabst fein;Step1 grob;Step1 fein;Ipref;"
-																			"Ri;Pheiz;Uheiz;Heizzeit;Unernst;Pause;Upump;MRG O2;Luft O2;K-Wert;"
-																			"PSoll trim;PSoll mess;Refsens beacht;Grenze IP stabil;min-Zeit-cuts;Wartezeit stabil;Rauschgrenze;max Anz überf;dIP Schichtend;Grob-Grenze;"
-																			"Fein-Grenze;Interpol Grob;Interpol Fein; 1/X C Grob;1/X C Fein;L o 1/X;Tol Endtest;P-Laser vor;P-Laser innen;P-Laserprozess;"
-																			"P-Vac;P-Atmos;P-Soll;P-Ist;Leckrate;Massenstrom;Vorschub;IP-Start;IP-End;IP-Soll;"
-                                      "Anz. Schnitte;Aver Anz. Überfahrten;Error_Nummer;WT-Info;IP_Ref1_vor;IP_Ref2_vor;IP_Ref1_nach;IP_Ref2_nach;Stab. Uhrzeit;Stab. Druck;"
-																			"Stab. IP;...\n" );
-					fprintf_s( JournalDataFile, ";;;;;;;;;"
-																			";mm;mm;mm;mm;mm;mm;mm;mm;µA;"
-																			"Ω;W;V;s;V;s;V;Vol%%;Vol%%;mbar;"
-																			"mbar;mbar;;%%;ms;ms;µA;;%%;%%;"
-																			"%%;;;;;01;%%;W;W;;"
-																			"mbar;mbar;mbar;mbar;mbar/s;l/min;mm/s;µA;µA;µA;"
-																			";;;;µA;µA;µA;µA;;mbar;"
-																			"µA;...\n" );
-					#else
-					fprintf_s( JournalDataFile, "Typ;Chargennr;Code;Seriennummer;WT-Nr;WT-Pos;Datum Uhrzeit;Kammer;Ref1;"
-																			"Ref2;Breite;Länge;Spalt;Vorhalt fein;Startabst grob;Startabst fein;Step1 grob;Step1 fein;Ipref;"
-																			"Ri;Pheiz;Uheiz;Heizzeit;Unernst;Pause;Upump;MRG O2;Luft O2;K-Wert;"
-																			"PSoll trim;PSoll mess;Refsens beacht;Grenze IP stabil;min-Zeit-cuts;Wartezeit stabil;Rauschgrenze;max Anz überf;dIP Schichtend;Grob-Grenze;"
-																			"Fein-Grenze;Interpol Grob;Interpol Fein; 1/X C Grob;1/X C Fein;L o 1/X;Tol Endtest;P-Laser vor;P-Laser innen;P-Laserprozess;"
-																			"P-Vac;P-Atmos;P-Soll;P-Ist;Leckrate;Massenstrom;Vorschub;IP-Start;IP-End;IP-Soll;"
-                                      "Anz. Schnitte;Aver Anz. Überfahrten;Error_Nummer;WT-Info;IP_Ref1_vor;IP_Ref2_vor;IP_Ref1_nach;IP_Ref2_nach;Stab. Uhrzeit;Stab. Druck;"
-																			"Stab. IP;Stab. vorher Uhrzeit;RH;PH;Ri;IP-Offset GS;rel. IP-Kor;IP-Offset DS;dIP AS?;dt U-Ri-Reg.;"
-																			"E U-Ri-Reg.;dIH/dt;IH_t1;dRH/dt;RH_t1;RHk;Diff_min;Abs. Lochrand;Zahl zus Schn.;Hub Grobabgl.;"
-																			"tiefe Schn. fein;dIP AS fein?;min Ueberf. fein;SW Ver;Rep.Rate aktiv;min. Rep.Rate;Rep.Rate;min. Laser Ampl.;Laser Ampl.;min.Anz.LetztGrob.\n" );
-					fprintf_s( JournalDataFile, ";;;;;;;;;"
-																			";mm;mm;mm;mm;mm;mm;mm;mm;µA;"
-																			"Ohm;W;V;s;V;s;V;Vol%%;Vol%%;mbar;"
-																			"mbar;mbar;;%%;ms;ms;µA;;%%;%%;"
-																			"%%;;;;;01;%%;W;W;;"
-																			"mbar;mbar;mbar;mbar;mbar/s;l/min;mm/s;µA;µA;µA;"
-																			";;;;µA;µA;µA;µA;;mbar;"
-																			"µA;;Ohm;Watt;Ohm;µA;;µA;%%;s;"
-																			"VAs;A/s;A;Ohm/s;Ohm;Ohm;mm;mm;;%%;"
-																			";;%%;;;;Hz;Hz;;\n" ); 
-					#endif
-					fflush(	JournalDataFile );
-					fclose(	JournalDataFile );
-					JournalDataFile = NULL;
+
+#ifdef LOGGING_OLD_FORMAT
+					fprintf_s(JournalDataFile, "Typ;Chargennr;Code;Seriennummer;WT-Nr;WT-Pos;Datum Uhrzeit;Kammer;Ref1;"
+						"Ref2;Breite;Länge;Spalt;Vorhalt fein;Startabst grob;Startabst fein;Step1 grob;Step1 fein;Ipref;"
+						"Ri;Pheiz;Uheiz;Heizzeit;Unernst;Pause;Upump;MRG O2;Luft O2;K-Wert;"
+						"PSoll trim;PSoll mess;Refsens beacht;Grenze IP stabil;min-Zeit-cuts;Wartezeit stabil;Rauschgrenze;max Anz überf;dIP Schichtend;Grob-Grenze;"
+						"Fein-Grenze;Interpol Grob;Interpol Fein; 1/X C Grob;1/X C Fein;L o 1/X;Tol Endtest;P-Laser vor;P-Laser innen;P-Laserprozess;"
+						"P-Vac;P-Atmos;P-Soll;P-Ist;Leckrate;Massenstrom;Vorschub;IP-Start;IP-End;IP-Soll;"
+						"Anz. Schnitte;Aver Anz. Überfahrten;Error_Nummer;WT-Info;IP_Ref1_vor;IP_Ref2_vor;IP_Ref1_nach;IP_Ref2_nach;Stab. Uhrzeit;Stab. Druck;"
+						"Stab. IP;...\n");
+					fprintf_s(JournalDataFile, ";;;;;;;;;"
+						";mm;mm;mm;mm;mm;mm;mm;mm;µA;"
+						"Ω;W;V;s;V;s;V;Vol%%;Vol%%;mbar;"
+						"mbar;mbar;;%%;ms;ms;µA;;%%;%%;"
+						"%%;;;;;01;%%;W;W;;"
+						"mbar;mbar;mbar;mbar;mbar/s;l/min;mm/s;µA;µA;µA;"
+						";;;;µA;µA;µA;µA;;mbar;"
+						"µA;...\n");
+#else
+					const char* cHeader = "Typ;Chargennr;Code;Seriennummer;WT-Nr;WT-Pos;Datum Uhrzeit;Kammer;Ref1;"
+						"Ref2;Breite;Länge;Spalt;Vorhalt fein;Startabst grob;Startabst fein;Step1 grob;Step1 fein;Ipref;"
+						"Ri;Pheiz;Uheiz;Heizzeit;Unernst;Pause;Upump;MRG O2;Luft O2;K-Wert;"
+						"PSoll trim;PSoll mess;Refsens beacht;Grenze IP stabil;min-Zeit-cuts;Wartezeit stabil;Rauschgrenze;max Anz überf;dIP Schichtend;Grob-Grenze;"
+						"Fein-Grenze;Interpol Grob;Interpol Fein; 1/X C Grob;1/X C Fein;L o 1/X;Tol Endtest;P-Laser vor;P-Laser innen;P-Laserprozess;"
+						"P-Vac;P-Atmos;P-Soll;P-Ist;Leckrate;Massenstrom;Vorschub;IP-Start;IP-End;IP-Soll;"
+						"Anz. Schnitte;Aver Anz. Überfahrten;Error_Nummer;WT-Info;IP_Ref1_vor;IP_Ref2_vor;IP_Ref1_nach;IP_Ref2_nach;Stab. Uhrzeit;Stab. Druck;"
+						"Stab. IP;Stab. vorher Uhrzeit;RH;PH;Ri;IP-Offset GS;rel. IP-Kor;IP-Offset DS;dIP AS?;dt U-Ri-Reg.;"
+						"E U-Ri-Reg.;dIH/dt;IH_t1;dRH/dt;RH_t1;RHk;Diff_min;Abs. Lochrand;Zahl zus Schn.;Hub Grobabgl.;"
+						"tiefe Schn. fein;dIP AS fein?;min Ueberf. fein;SW Ver;Rep.Rate aktiv;min. Rep.Rate;Rep.Rate;min. Laser Ampl.;Laser Ampl.;min.Anz.LetztGrob.\n";
+
+					const char* cHeader_IP4Sel = "Typ;Chargennr;Code;Seriennummer;WT-Nr;WT-Pos;Datum Uhrzeit;Kammer;Ref1;"
+						"Ref2;Ipref;""Ri;Pheiz;Uheiz;Heizzeit;Unernst;Pause;Upump;MRG O2;Luft O2;K-Wert;"
+						"PSoll trim;PSoll mess;Refsens beacht;Grenze IP stabil;"
+						"P-Vac;P-Atmos;P-Soll;P-Ist;Leckrate;Massenstrom;IP-Start;IP-End;"
+						"Error_Nummer;WT-Info;IP_Ref1_vor;IP_Ref2_vor;IP_Ref1_nach;IP_Ref2_nach;"
+						"Stab. IP;UApe;UNernst;IRe;UHmax;RH;PH;Ri;RiMin;RiMax;IP-Offset GS;IP-Offset DS;dIP AS?;dt U-Ri-Reg.;"
+						"E U-Ri-Reg.;dIH/dt;dRH/dt;RHk;\n";
+						
+					const char* cUnits = ";mm;mm;mm;mm;mm;mm;mm;mm;uA;"
+						"Ohm;W;V;s;V;s;V;Vol%%;Vol%%;mbar;"
+						"mbar;mbar;;%%;ms;ms;uA;;%%;%%;"
+						"%%;;;;;01;%%;W;W;;"
+						"mbar;mbar;mbar;mbar;mbar/s;l/min;mm/s;uA;uA;uA;"
+						";;;;uA;uA;uA;uA;;mbar;"
+						"uA;...\n";
+
+					const char* cUnits_IP4Sel = ";;;;;;;;;;"
+						"uA;Ohm;W;V;s;V;s;V;Vol%%;Vol%%;mbar;"
+						"mbar;mbar;;%%;"
+						"mbar;mbar;mbar;mbar;mbar/s;l/min;uA;uA;"
+						";;uA;uA;uA;uA;"
+						"uA;mV;mV;uA;V;Ohm;Watt;Ohm;Ohm;Ohm;uA;uA;%%;s;"
+						"VAs;A/s;Ohm/s;Ohm;;;\n";
+
+
+					if ( (Type == ProcessType::Ip4Measure2PointUp) ||
+						 (Type == ProcessType::Ip4MeasureUNernstControl) )
+					{
+						fprintf_s(JournalDataFile, cHeader_IP4Sel);
+						fprintf_s(JournalDataFile, cUnits_IP4Sel);
+					}
+					else 
+					{
+						fprintf_s(JournalDataFile, cHeader);
+						fprintf_s(JournalDataFile, cUnits);
+					}
+#endif
+						fflush(JournalDataFile);
+						fclose(JournalDataFile);
+						JournalDataFile = NULL;
 				}
 			}
 			else
 			{
 				fflush(	JournalDataFile );
-				fclose(	JournalDataFile );																				//close file
+				fclose(	JournalDataFile );		//close file
 				JournalDataFile = NULL;	
 			}
 
 			fopen_s( &JournalDataFile, TempString, "a+" );
-			if( JournalDataFile != NULL )
+			if (JournalDataFile != NULL)
 			{
 				SYSTEMTIME	Time;
-				GetLocalTime( &Time );
+				GetLocalTime(&Time);
 				SEValueInfo Value;
 
-
-				fprintf_s( JournalDataFile, "%03d;", TypeNo );																								  //typ number
-				fprintf_s( JournalDataFile, "%06d;", SETrimmingValues.AssemblyDataCommon.Charge );						  //charge number
-				fprintf_s( JournalDataFile, "%s;", SETrimmingValues.SETrimmingValuesTiepoint[i].ResultData.SerialCode );                 //serial code
-				fprintf_s( JournalDataFile, "%d;", SETrimmingValues.SETrimmingValuesTiepoint[i].ResultData.SerialNumber );							 //serial number
-				fprintf_s( JournalDataFile, "%d;", SETrimmingValues.AssemblyDataCommon.WpcNo );							    //wpc number
-				fprintf_s( JournalDataFile, "%d;", i + 1 );																										  //wpc pos
-				fprintf_s( JournalDataFile, "%02d.%02d.%02d %02d:%02d:%02d;", Time.wDay, Time.wMonth, Time.wYear, Time.wHour, Time.wMinute, Time.wSecond ); //date time
-				fprintf_s( JournalDataFile, "%d;", SETrimmingValues.AssemblyDataCommon.ChamberNumber );			    //chamber
-				fprintf_s( JournalDataFile, "%.3f/%.3f/%.3f//%.2f/%.2f;", 																			//reference 1
+				fprintf_s(JournalDataFile, "%03d;", TypeNo);		//typ number
+				fprintf_s(JournalDataFile, "%06d;", SETrimmingValues.AssemblyDataCommon.Charge);		 //charge number
+				fprintf_s(JournalDataFile, "%s;", SETrimmingValues.SETrimmingValuesTiepoint[i].ResultData.SerialCode);               //serial code
+				fprintf_s(JournalDataFile, "%d;", SETrimmingValues.SETrimmingValuesTiepoint[i].ResultData.SerialNumber);							 //serial number
+				fprintf_s(JournalDataFile, "%d;", SETrimmingValues.AssemblyDataCommon.WpcNo);							    //wpc number
+				fprintf_s(JournalDataFile, "%d;", i + 1);																										  //wpc pos
+				fprintf_s(JournalDataFile, "%02d.%02d.%02d %02d:%02d:%02d;", Time.wDay, Time.wMonth, Time.wYear, Time.wHour, Time.wMinute, Time.wSecond); //date time
+				fprintf_s(JournalDataFile, "%d;", SETrimmingValues.AssemblyDataCommon.ChamberNumber);			    //chamber
+				fprintf_s(JournalDataFile, "%.3f/%.3f/%.3f//%.2f/%.2f;", 																			//reference 1
 					ParamStationTrimmChamber.ParamStationRefCell.ParamStationMainReferenceCell.IpSetpointRef[0],	//reference 1: ip setpoint
 					ParamTrimmChamber.ParamRefCell.ParamMainReferenceCell.IpRef,																	//reference 1: ip ref
 					ParamTrimmChamber.ParamRefCell.ParamMainReferenceCell.HeatingRi,															//reference 1: ri
 					ParamTrimmChamber.ParamRefCell.ParamMainReferenceCell.NernstVoltage,													//reference 1: nernst voltage
-					ParamTrimmChamber.ParamRefCell.ParamMainReferenceCell.PumpVoltage );													//reference 1: pump voltage		
-			
-				fprintf_s( JournalDataFile, "%.3f/%.3f/%.3f//%.2f/%.2f;", 																			//reference 2
+					ParamTrimmChamber.ParamRefCell.ParamMainReferenceCell.PumpVoltage);													//reference 1: pump voltage		
+
+				fprintf_s(JournalDataFile, "%.3f/%.3f/%.3f//%.2f/%.2f;", 																			//reference 2
 					ParamStationTrimmChamber.ParamStationRefCell.ParamStationMainReferenceCell.IpSetpointRef[1],	//reference 2: ip setpoint
 					ParamTrimmChamber.ParamRefCell.ParamMainReferenceCell.IpRef,																	//reference 2: ip ref
 					ParamTrimmChamber.ParamRefCell.ParamMainReferenceCell.HeatingRi,															//reference 2: ri
 					ParamTrimmChamber.ParamRefCell.ParamMainReferenceCell.NernstVoltage,													//reference 2: nernst voltage
-					ParamTrimmChamber.ParamRefCell.ParamMainReferenceCell.PumpVoltage );													//reference 2: pump voltage	
-				fprintf_s( JournalDataFile, "%.3f;", ImageProcessing[ i ].Diameter );														//width
-				fprintf_s( JournalDataFile, "%.3f;", ImageProcessing[ i ].Diameter );														//length
-				fprintf_s( JournalDataFile, "%.3f;", ParamTrimmChamber.ParamTrimmProcess.ParamGeometry.Fissure ); //fissure
-				fprintf_s( JournalDataFile, "%.3f;", ParamTrimmChamber.ParamTrimmProcess.ParamGeometry.HoldBackPositionFineTrim ); //hold back position fine
-				fprintf_s( JournalDataFile, "%.3f;", ParamTrimmChamber.ParamTrimmProcess.ParamGeometry.StartDistanceRawTrim ); //start distance raw trimming
-				fprintf_s( JournalDataFile, "%.3f;", ParamTrimmChamber.ParamTrimmProcess.ParamGeometry.StartDistanceFineTrim ); //start distance fine trimming
-				fprintf_s( JournalDataFile, "%.3f;", ParamTrimmChamber.ParamTrimmProcess.ParamGeometry.Step1RawTrim ); //step 1 raw trimming
-				fprintf_s( JournalDataFile, "%.3f;", ParamTrimmChamber.ParamTrimmProcess.ParamGeometry.Step1FineTrim ); //step 1 fine trimming
+					ParamTrimmChamber.ParamRefCell.ParamMainReferenceCell.PumpVoltage);													//reference 2: pump voltage	
+				if ( ( Type != ProcessType::Ip4Measure2PointUp ) &&
+					 ( Type != ProcessType::Ip4MeasureUNernstControl ) )
+				{
+					fprintf_s(JournalDataFile, "%.3f;", ImageProcessing[i].Diameter);														//width
+					fprintf_s(JournalDataFile, "%.3f;", ImageProcessing[i].Diameter);														//length
+					fprintf_s(JournalDataFile, "%.3f;", ParamTrimmChamber.ParamTrimmProcess.ParamGeometry.Fissure); //fissure
+					fprintf_s(JournalDataFile, "%.3f;", ParamTrimmChamber.ParamTrimmProcess.ParamGeometry.HoldBackPositionFineTrim); //hold back position fine
+					fprintf_s(JournalDataFile, "%.3f;", ParamTrimmChamber.ParamTrimmProcess.ParamGeometry.StartDistanceRawTrim); //start distance raw trimming
+					fprintf_s(JournalDataFile, "%.3f;", ParamTrimmChamber.ParamTrimmProcess.ParamGeometry.StartDistanceFineTrim); //start distance fine trimming
+					fprintf_s(JournalDataFile, "%.3f;", ParamTrimmChamber.ParamTrimmProcess.ParamGeometry.Step1RawTrim); //step 1 raw trimming
+					fprintf_s(JournalDataFile, "%.3f;", ParamTrimmChamber.ParamTrimmProcess.ParamGeometry.Step1FineTrim); //step 1 fine trimming
+				}
 				fprintf_s( JournalDataFile, "%.3f;", ParamTrimmChamber.ParamTrimmCell.ParamMainTrimmingCell.IpRef ); //ip ref
 				if( SETrimmingValues.AssemblyDataCommon.ProcessType == 1 )
 				{
@@ -1855,71 +2314,110 @@ int SETrimmingChamber::SavePartsJournal( void )
 				fprintf_s( JournalDataFile, "%.3f;", ParamTrimmChamber.ParamTrimmCell.ParamIpMeasurement.KValue ); //k value
 
 				fprintf_s( JournalDataFile, "%.3f;", ParamTrimmChamber.ParamTrimmCell.ParamIpMeasurement.PSetpoint ); //pressure setpoint
+
 				fprintf_s( JournalDataFile, "0;" );																	//not used
+
 				fprintf_s( JournalDataFile, "%d;", ParamTrimmChamber.ParamTrimmCell.ParamIpMeasurement.IpCorrectionMode ); //ip correction mode
-				fprintf_s( JournalDataFile, "%.3f;", ParamTrimmChamber.ParamTrimmCell.ParamIpMeasurement.IpStable );   //ip stable
-				fprintf_s( JournalDataFile, "%.3f;", ParamTrimmChamber.ParamTrimmCell.ParamIpMeasurement.MinCutTime ); //min cut time
-				fprintf_s( JournalDataFile, "%.3f;", ParamTrimmChamber.ParamTrimmCell.ParamIpMeasurement.StabilityWaitTime ); //stability wait time
-				fprintf_s( JournalDataFile, "%.3f;", ParamTrimmChamber.ParamTrimmProcess.ParamTrimmingProcess.DeltaIpNoise); //delta ip noise
-				fprintf_s( JournalDataFile, "%d;", ParamTrimmChamber.ParamTrimmProcess.ParamTrimmingProcess.MaxPassage); //max passage
-				fprintf_s( JournalDataFile, "%.3f;", ParamTrimmChamber.ParamTrimmProcess.ParamTrimmingProcess.DeltaIpLayerEnd); //delta ip layer end
-				fprintf_s( JournalDataFile, "%.3f;", ParamTrimmChamber.ParamTrimmProcess.ParamTrimmingProcess.DeltaIpLimitRawTrim); //delta ip limit raw trimming
 
-				fprintf_s( JournalDataFile, "%.3f;", ParamTrimmChamber.ParamTrimmProcess.ParamTrimmingProcess.DeltaIpLimitFineTrim); //delta ip limit fine trimming
-				fprintf_s( JournalDataFile, "%.3f;", ParamTrimmChamber.ParamTrimmProcess.ParamTrimmingProcess.InterpolationFactorRawTrim); //interpolation factor raw trimming
-				fprintf_s( JournalDataFile, "%.3f;", ParamTrimmChamber.ParamTrimmProcess.ParamTrimmingProcess.InterpolationFactorFineTrim); //interpolation factor fine trimming
-				fprintf_s( JournalDataFile, "%.3f;", ParamTrimmChamber.ParamTrimmProcess.ParamTrimmingProcess.FaktorCRawTrim); //factor c raw trimming
-				fprintf_s( JournalDataFile, "%.3f;", ParamTrimmChamber.ParamTrimmProcess.ParamTrimmingProcess.FaktorCFineTrim); //factor c fine trimming
-				fprintf_s( JournalDataFile, "%d;", ParamTrimmChamber.ParamTrimmProcess.ParamTrimmingProcess.Linear1X); //linear or 1/x
-				fprintf_s( JournalDataFile, "%.3f;", ( abs( ParamTrimmChamber.ParamTrimmProcess.ParamTrimmingProcess.EndTestUpperTolarance ) + abs( ParamTrimmChamber.ParamTrimmProcess.ParamTrimmingProcess.EndTestUpperTolarance ) ) / 2.0f );
-				fprintf_s( JournalDataFile, "0;" ); //laser power upper sensor
-				fprintf_s( JournalDataFile, "%.3f;", SETrimmingValues.AssemblyDataCommon.LaserPower ); //laser power lower sensor
-				fprintf_s( JournalDataFile, "%.3f;", ( 100.0f / SETrimmingValues.AssemblyDataCommon.AdjustPollutePercent ) * ParamTrimmChamber.ParamTrimmProcess.ParamLaser.LaserPower[ i ] ); //laser power process
+				fprintf_s(JournalDataFile, "%.3f;", ParamTrimmChamber.ParamTrimmCell.ParamIpMeasurement.IpStable);   //ip stable
 
+				if ( ( Type != ProcessType::Ip4Measure2PointUp ) &&
+					 ( Type != ProcessType::Ip4MeasureUNernstControl ) )
+				{
+					fprintf_s(JournalDataFile, "%.3f;", ParamTrimmChamber.ParamTrimmCell.ParamIpMeasurement.MinCutTime); //min cut time
+					fprintf_s(JournalDataFile, "%.3f;", ParamTrimmChamber.ParamTrimmCell.ParamIpMeasurement.StabilityWaitTime); //stability wait time
+					fprintf_s(JournalDataFile, "%.3f;", ParamTrimmChamber.ParamTrimmProcess.ParamTrimmingProcess.DeltaIpNoise); //delta ip noise
+					fprintf_s(JournalDataFile, "%d;", ParamTrimmChamber.ParamTrimmProcess.ParamTrimmingProcess.MaxPassage); //max passage
+					fprintf_s(JournalDataFile, "%.3f;", ParamTrimmChamber.ParamTrimmProcess.ParamTrimmingProcess.DeltaIpLayerEnd); //delta ip layer end
+					fprintf_s(JournalDataFile, "%.3f;", ParamTrimmChamber.ParamTrimmProcess.ParamTrimmingProcess.DeltaIpLimitRawTrim); //delta ip limit raw trimming
+
+					fprintf_s(JournalDataFile, "%.3f;", ParamTrimmChamber.ParamTrimmProcess.ParamTrimmingProcess.DeltaIpLimitFineTrim); //delta ip limit fine trimming
+					fprintf_s(JournalDataFile, "%.3f;", ParamTrimmChamber.ParamTrimmProcess.ParamTrimmingProcess.InterpolationFactorRawTrim); //interpolation factor raw trimming
+					fprintf_s(JournalDataFile, "%.3f;", ParamTrimmChamber.ParamTrimmProcess.ParamTrimmingProcess.InterpolationFactorFineTrim); //interpolation factor fine trimming
+					fprintf_s(JournalDataFile, "%.3f;", ParamTrimmChamber.ParamTrimmProcess.ParamTrimmingProcess.FaktorCRawTrim); //factor c raw trimming
+					fprintf_s(JournalDataFile, "%.3f;", ParamTrimmChamber.ParamTrimmProcess.ParamTrimmingProcess.FaktorCFineTrim); //factor c fine trimming
+					fprintf_s(JournalDataFile, "%d;", ParamTrimmChamber.ParamTrimmProcess.ParamTrimmingProcess.Linear1X); //linear or 1/x
+					fprintf_s(JournalDataFile, "%.3f;", (abs(ParamTrimmChamber.ParamTrimmProcess.ParamTrimmingProcess.EndTestUpperTolarance) + abs(ParamTrimmChamber.ParamTrimmProcess.ParamTrimmingProcess.EndTestUpperTolarance)) / 2.0f);
+					fprintf_s(JournalDataFile, "0;"); //laser power upper sensor
+					fprintf_s(JournalDataFile, "%.3f;", SETrimmingValues.AssemblyDataCommon.LaserPower); //laser power lower sensor
+					fprintf_s(JournalDataFile, "%.3f;", (100.0f / SETrimmingValues.AssemblyDataCommon.AdjustPollutePercent) * ParamTrimmChamber.ParamTrimmProcess.ParamLaser.LaserPower[i]); //laser power process
+				}
 				fprintf_s( JournalDataFile, "%.3f;", SETrimmingValues.AssemblyDataCommon.EvacuatedPressure ); //evacuated pressure
 				fprintf_s( JournalDataFile, "%.3f;", SETrimmingValues.AssemblyDataCommon.AtmospherePressure ); //pressure atmosphere
 				fprintf_s( JournalDataFile, "%.3f;", ParamTrimmChamber.ParamTrimmCell.ParamIpMeasurement.PSetpoint ); //pressure setpoint
 				fprintf_s( JournalDataFile, "%.3f;", ChamberPressureActual ); //actual pressure chamber
 				fprintf_s( JournalDataFile, "%.3f;", SETrimmingValues.AssemblyDataCommon.LeakageRate ); //leackage rate
 				fprintf_s( JournalDataFile, "%.3f;", ChamberFlowActual ); //mass flow
-				fprintf_s( JournalDataFile, "%.3f;", ParamTrimmChamber.ParamTrimmProcess.ParamLaser.ScannerSpeed ); //laser speed
+				if (( Type != ProcessType::Ip4Measure2PointUp ) &&
+					( Type != ProcessType::Ip4MeasureUNernstControl ) )
+				{
+					fprintf_s(JournalDataFile, "%.3f;", ParamTrimmChamber.ParamTrimmProcess.ParamLaser.ScannerSpeed); //laser speed
+				}
 				fprintf_s( JournalDataFile, "%.3f;", SETrimmingValues.SETrimmingValuesTiepoint[i].ResultData.IpStart ); //ip first cut
 				fprintf_s( JournalDataFile, "%.3f;", SETrimmingValues.SETrimmingValuesTiepoint[i].ResultData.IpEndCut ); //ip last cut
-				fprintf_s( JournalDataFile, "%.3f;", ParamTrimmChamber.ParamTrimmProcess.ParamTrimmingProcess.IpSetpoint ); //ip setpoint
 
-				fprintf_s( JournalDataFile, "%d;", SETrimmingValues.SETrimmingValuesTiepoint[i].ResultData.CutCount ); //cut count
-				fprintf_s( JournalDataFile, "%.3f;", SETrimmingValues.SETrimmingValuesTiepoint[i].ResultData.AverageCrossingCount ); //cut count
+				if ( ( Type != ProcessType::Ip4Measure2PointUp ) &&
+					 ( Type != ProcessType::Ip4MeasureUNernstControl ) )
+				{
+					fprintf_s(JournalDataFile, "%.3f;", ParamTrimmChamber.ParamTrimmProcess.ParamTrimmingProcess.IpSetpoint); //ip setpoint
+					fprintf_s(JournalDataFile, "%d;", SETrimmingValues.SETrimmingValuesTiepoint[i].ResultData.CutCount); //cut count
+					fprintf_s(JournalDataFile, "%.3f;", SETrimmingValues.SETrimmingValuesTiepoint[i].ResultData.AverageCrossingCount); //cut count
+				}
 				fprintf_s( JournalDataFile, "%d;", SETrimmingValues.SETrimmingValuesTiepoint[i].ResultData.SEPartNioReworkReason ); //nio rework reason
 				fprintf_s( JournalDataFile, "%d;", SETrimmingValues.SETrimmingValuesTiepoint[i].ResultData.SEPartStatus ); //part status
 				fprintf_s( JournalDataFile, "%.3f;", IpRefBeforeProcess[ 0 ] ); //ip reference 1 before process
 				fprintf_s( JournalDataFile, "%.3f;", IpRefBeforeProcess[ 1 ] ); //ip reference 1 before process
 				fprintf_s( JournalDataFile, "%.3f;", IpRefAfterProcess[ 0 ] ); //ip reference 2 after process
 				fprintf_s( JournalDataFile, "%.3f;", IpRefAfterProcess[ 1 ] ); //ip reference 2 after process
-				fprintf_s( JournalDataFile, "0;" ); //not used ( formally: stability time )
-				fprintf_s( JournalDataFile, "0;" ); //not used ( formally: stability pressure )
+				if ( ( Type != ProcessType::Ip4Measure2PointUp ) &&
+					 ( Type != ProcessType::Ip4MeasureUNernstControl ) )
+				{
+					fprintf_s(JournalDataFile, "0;"); //not used ( formally: stability time )
+					fprintf_s(JournalDataFile, "0;"); //not used ( formally: stability pressure )
+				}
 				fprintf_s( JournalDataFile, "%.3f;", SETrimmingValues.SETrimmingValuesTiepoint[i].ResultData.IpEndCheck ); //ip end check
+				
+				if ((Type == ProcessType::Ip4Measure2PointUp) ||
+					(Type == ProcessType::Ip4MeasureUNernstControl))
+				{
+					fprintf_s(JournalDataFile, "%.1f;", SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.fUApeAtIPu4); 
+					fprintf_s(JournalDataFile, "%.1f;", SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.fUNernst); // 
+					fprintf_s(JournalDataFile, "%.1f;", SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.fIRe);
+					fprintf_s(JournalDataFile, "%.1f;", SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.fUhMax);
+				}
 
 				#ifndef LOGGING_OLD_FORMAT
-				fprintf_s( JournalDataFile, "0;" ); //not used ( formally: stability time previous )
-				TrimmCell->GetLastValue( i + 1, IMT_RHh, 0, &Value );
-				if( _isnan( Value.Value )	== 0 )
+				if ( ( Type != ProcessType::Ip4Measure2PointUp ) &&
+					 ( Type != ProcessType::Ip4MeasureUNernstControl ) )
 				{
-					fprintf_s( JournalDataFile, "%.2f;", Value.Value ); //last rhh
+					fprintf_s(JournalDataFile, "0;"); //not used ( formally: stability time previous )
 				}
+				TrimmCell->GetLastValue( i + 1, IMT_RHh, 0, &Value );
+				fprintf_s( JournalDataFile, "%.2f;", Value.Value ); //last rhh
+
 			
 				TrimmCell->GetLastValue( i + 1, IMT_PH, 0, &Value );
-				if( _isnan( Value.Value )	== 0 )
-				{
-					fprintf_s( JournalDataFile, "%.2f;", Value.Value ); //last ph
-				}
+				fprintf_s( JournalDataFile, "%.2f;", Value.Value ); //last ph
+
 
 				TrimmCell->GetLastValue( i + 1, IMT_RiAC, 0, &Value );
-				if( _isnan( Value.Value )	== 0 )
+				fprintf_s( JournalDataFile, "%.2f;", Value.Value ); //last riac
+	
+				if ((Type == ProcessType::Ip4Measure2PointUp) ||
+					(Type == ProcessType::Ip4MeasureUNernstControl))
 				{
-					fprintf_s( JournalDataFile, "%.2f;", Value.Value ); //last riac
+					TrimmCell->GetLastValue(i + 1, IMT_RiMin, 0, &Value);
+					fprintf_s(JournalDataFile, "%.2f;", Value.Value); //last riac
+					TrimmCell->GetLastValue(i + 1, IMT_RiMax, 0, &Value);
+					fprintf_s(JournalDataFile, "%.2f;", Value.Value); //last riac
 				}
+
 				fprintf_s( JournalDataFile, "%.3f;", ParamStationTrimmChamber.ParamStationTrimmProcess.ParamStationTrimmingProcess.IpOffsetGasoline ); //ip offset gs
-				fprintf_s( JournalDataFile, "%.3f;", ParamTrimmChamber.ParamTrimmCell.ParamIpMeasurement.IpCorrectionSource ); //ip correction source
+				if ( ( Type != ProcessType::Ip4Measure2PointUp ) &&
+					 ( Type != ProcessType::Ip4MeasureUNernstControl ) )
+				{
+					fprintf_s(JournalDataFile, "%d;", ParamTrimmChamber.ParamTrimmCell.ParamIpMeasurement.IpCorrectionSource); //ip correction source
+				}
 				fprintf_s( JournalDataFile, "%.3f;", ParamStationTrimmChamber.ParamStationTrimmProcess.ParamStationTrimmingProcess.IpOffsetDiesel ); //ip offset ds
 				fprintf_s( JournalDataFile, "%.3f;", ParamTrimmChamber.ParamTrimmProcess.ParamTrimmingProcess.DeltaIpLayerEndScrap ); //delta layer end scrap
 				TrimmCell->GetLastValue( i + 1, IMT_dtRiReg, 0, &Value );
@@ -1937,33 +2435,51 @@ int SETrimmingChamber::SavePartsJournal( void )
 				{
 					fprintf_s( JournalDataFile, "%.3f;", Value.Value ); //last eh
 				}
-				fprintf_s( JournalDataFile, "0;" );																	//not used (formally: ih t1)
+				if ( ( Type != ProcessType::Ip4Measure2PointUp ) &&
+					 ( Type != ProcessType::Ip4MeasureUNernstControl ) )
+				{
+					fprintf_s(JournalDataFile, "0;");		//not used (formally: ih t1)
+				}
 				TrimmCell->GetLastValue( i + 1, IMT_dRHdt, 0, &Value );
 				if( _isnan( Value.Value )	== 0 )
 				{
 					fprintf_s( JournalDataFile, "%.3f;", Value.Value ); //last rh dt
 				}
-				fprintf_s( JournalDataFile, "0;" );																	//not used (formally: rh t1)
+				if ( ( Type != ProcessType::Ip4Measure2PointUp ) &&
+					 ( Type != ProcessType::Ip4MeasureUNernstControl ) )
+				{
+					fprintf_s(JournalDataFile, "0;");																	//not used (formally: rh t1)
+				}
 				TrimmCell->GetLastValue( i + 1, IMT_RHk, 0, &Value );
 				if( _isnan( Value.Value )	== 0 )
 				{
 					fprintf_s( JournalDataFile, "%.3f;", Value.Value ); //last rhk
 				}
-				fprintf_s( JournalDataFile, "%.3f;", ParamTrimmChamber.ParamTrimmProcess.ParamTrimmingProcess.MinCutDistance ); //min cut distance
-				fprintf_s( JournalDataFile, "%.3f;", ParamTrimmChamber.ParamTrimmProcess.ParamTrimmingProcess.MinDistanceToEdgeForAdditionalCuts ); //min distance for additional cuts
-				fprintf_s( JournalDataFile, "0;");																//additional cuts allowed (todo bz)
-				fprintf_s( JournalDataFile, "%.3f;", ParamTrimmChamber.ParamTrimmProcess.ParamTrimmingProcess.MinDeviationRawTrim ); //min deviation
-				fprintf_s( JournalDataFile, "%.3f;", ParamTrimmChamber.ParamTrimmProcess.ParamTrimmingProcess.DeepCutsFineTrim ); //deep cuts fine trimming
-				fprintf_s( JournalDataFile, "%.3f;", ParamTrimmChamber.ParamTrimmProcess.ParamTrimmingProcess.DeltaIpLastFineTrim ); //delta ip last fin trimming
-				fprintf_s( JournalDataFile, "%.3f;", ParamTrimmChamber.ParamTrimmProcess.ParamTrimmingProcess.MinPassageFineTrim ); //min passage fine trimming
+				if ( ( Type != ProcessType::Ip4Measure2PointUp ) &&
+					 ( Type != ProcessType::Ip4MeasureUNernstControl) )
+				{
+					fprintf_s(JournalDataFile, "%.3f;", ParamTrimmChamber.ParamTrimmProcess.ParamTrimmingProcess.MinCutDistance); //min cut distance
+					fprintf_s(JournalDataFile, "%.3f;", ParamTrimmChamber.ParamTrimmProcess.ParamTrimmingProcess.MinDistanceToEdgeForAdditionalCuts); //min distance for additional cuts
+					fprintf_s(JournalDataFile, "0;");																//additional cuts allowed (todo bz)
+					fprintf_s(JournalDataFile, "%.3f;", ParamTrimmChamber.ParamTrimmProcess.ParamTrimmingProcess.MinDeviationRawTrim); //min deviation
+					fprintf_s(JournalDataFile, "%d;", ParamTrimmChamber.ParamTrimmProcess.ParamTrimmingProcess.DeepCutsFineTrim); //deep cuts fine trimming
+					fprintf_s(JournalDataFile, "%.3f;", ParamTrimmChamber.ParamTrimmProcess.ParamTrimmingProcess.DeltaIpLastFineTrim); //delta ip last fin trimming
+					fprintf_s(JournalDataFile, "%d;", ParamTrimmChamber.ParamTrimmProcess.ParamTrimmingProcess.MinPassageFineTrim); //min passage fine trimming
+				}
+
 				FileVersionGet( TempString, sizeof( TempString ), "SELaserTrimming.exe");
-				fprintf_s( JournalDataFile, "%s;", TempString);										//sw version
-				fprintf_s( JournalDataFile, "0;" );																//not used (formally: use lasermonitor)
-				fprintf_s( JournalDataFile, "0;" );																//not used (formally: lasermonitor)
-				fprintf_s( JournalDataFile, "0;" );																//not used (formally: lasermonitor)
-				fprintf_s( JournalDataFile, "0;" );																//not used (formally: lasermonitor)
-				fprintf_s( JournalDataFile, "0;" );																//not used (formally: lasermonitor)
-				fprintf_s( JournalDataFile, "%.3f;", ParamTrimmChamber.ParamTrimmProcess.ParamTrimmingProcess.MinPassageLastCut ); //min passage last cut
+				fprintf_s( JournalDataFile, "%s;", TempString);		//sw version
+			
+				if ( ( Type != ProcessType::Ip4Measure2PointUp ) &&
+					 ( Type != ProcessType::Ip4MeasureUNernstControl) )
+				{
+					fprintf_s(JournalDataFile, "0;");																//not used (formally: use lasermonitor)
+					fprintf_s(JournalDataFile, "0;");																//not used (formally: lasermonitor)
+					fprintf_s(JournalDataFile, "0;");																//not used (formally: lasermonitor)
+					fprintf_s(JournalDataFile, "0;");																//not used (formally: lasermonitor)
+					fprintf_s(JournalDataFile, "0;");																//not used (formally: lasermonitor)
+					fprintf_s(JournalDataFile, "%d;", ParamTrimmChamber.ParamTrimmProcess.ParamTrimmingProcess.MinPassageLastCut); //min passage last cut
+				}
 				/*fprintf_s( JournalDataFile, "%d;", ParamTrimmChamber.ParamTrimmProcess.ParamLaser.WobbleEnable ); //wobble enable
 				fprintf_s( JournalDataFile, "%.3f;", ParamTrimmChamber.ParamTrimmProcess.ParamLaser.WobbleFrequency ); //wobble frequency
 				fprintf_s( JournalDataFile, "%.3f;", ParamTrimmChamber.ParamTrimmProcess.ParamLaser.WobbleTransversal ); //wobble amp
@@ -1979,57 +2495,61 @@ int SETrimmingChamber::SavePartsJournal( void )
 			}
 			//-- write statistics file end
 
-
 			//-- write cut file
-			sprintf_s(TempString, "%s%03d%04d_%1d_cuts.txt", DATA_SAVE_LOCATION, SETrimmingValues.AssemblyDataCommon.TypeNo, SETrimmingValues.AssemblyDataCommon.Charge, SETrimmingValues.AssemblyDataCommon.PartCharge );
-	
-			fopen_s( &JournalDataFile, TempString, "r" );
-			if( JournalDataFile == NULL )
+			if ((Type != ProcessType::Ip4Measure2PointUp) &&
+				(Type != ProcessType::Ip4MeasureUNernstControl))
 			{
-				fopen_s( &JournalDataFile, TempString, "a+" );
-				if( JournalDataFile != NULL )
+
+				sprintf_s(TempString, "%s%03d%04d_%1d_cuts.txt", DATA_SAVE_LOCATION, SETrimmingValues.AssemblyDataCommon.TypeNo, SETrimmingValues.AssemblyDataCommon.Charge, SETrimmingValues.AssemblyDataCommon.PartCharge);
+
+				fopen_s(&JournalDataFile, TempString, "r");
+				if (JournalDataFile == NULL)
 				{
-					fprintf_s( JournalDataFile, "Typ;Chargennr;Laminat;SE-Nr;WT-Nr;WT-Pos;Datum;Uhrzeit;Bediener;[StartX;StartY;IP-ist;P-Kammer;Schnitt-Nr;Überfahrt];[...]\n" );
-					fflush(	JournalDataFile );
-					fclose(	JournalDataFile );
+					fopen_s(&JournalDataFile, TempString, "a+");
+					if (JournalDataFile != NULL)
+					{
+						fprintf_s(JournalDataFile, "Typ;Chargennr;Laminat;SE-Nr;WT-Nr;WT-Pos;Datum;Uhrzeit;Bediener;[StartX;StartY;IP-ist;P-Kammer;Schnitt-Nr;Überfahrt];[...]\n");
+						fflush(JournalDataFile);
+						fclose(JournalDataFile);
+						JournalDataFile = NULL;
+					}
+				}
+				else
+				{
+					fflush(JournalDataFile);
+					fclose(JournalDataFile);																				//close file
 					JournalDataFile = NULL;
 				}
-			}
-			else
-			{
-				fflush(	JournalDataFile );
-				fclose(	JournalDataFile );																				//close file
-				JournalDataFile = NULL;	
-			}
 
-			fopen_s( &JournalDataFile, TempString, "a+" );
-			if( JournalDataFile != NULL )
-			{
-				SYSTEMTIME	Time;
-				GetLocalTime( &Time );
-
-				fprintf_s( JournalDataFile, "%03d;", TypeNo );																	//typ number
-				fprintf_s( JournalDataFile, "%06d;", SETrimmingValues.AssemblyDataCommon.Charge );						//charge number
-				fprintf_s( JournalDataFile, "%s;", SETrimmingValues.SETrimmingValuesTiepoint[i].ResultData.SerialCode );	//serial code
-				fprintf_s( JournalDataFile, "%d;", SETrimmingValues.SETrimmingValuesTiepoint[i].ResultData.SerialNumber );	//serial number
-				fprintf_s( JournalDataFile, "%d;",SETrimmingValues.AssemblyDataCommon.WpcNo );							 //wpc number
-				fprintf_s( JournalDataFile, "%d;", i + 1 );																											//wp pos
-				fprintf_s( JournalDataFile, "%02d.%02d.%02d;", Time.wDay, Time.wMonth, Time.wYear );				    //date
-				fprintf_s( JournalDataFile, "%02d:%02d:%02d;", Time.wHour, Time.wMinute, Time.wSecond );				//time
-				fprintf_s( JournalDataFile, "0;" );																															//user
-				for( int j = 0; j <= SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.CrossingCountEntire - 1; j++ )
+				fopen_s(&JournalDataFile, TempString, "a+");
+				if (JournalDataFile != NULL)
 				{
-					fprintf_s( JournalDataFile, "%.2f;", SETrimmingValues.SETrimmingValuesTiepoint[ i ].ProcessData.TrimmingCutXPos[ j ] );
-					fprintf_s( JournalDataFile, "%.2f;", SETrimmingValues.SETrimmingValuesTiepoint[ i ].ProcessData.TrimmingCutYPos[ j ] );
-					fprintf_s( JournalDataFile, "%.2f;", SETrimmingValues.SETrimmingValuesTiepoint[ i ].ProcessData.TrimmingCutIp[ j ] );
-					fprintf_s( JournalDataFile, "%.2f;", SETrimmingValues.SETrimmingValuesTiepoint[ i ].ProcessData.TrimmingCutChamberPressure[ j ] );
-					fprintf_s( JournalDataFile, "%d;", SETrimmingValues.SETrimmingValuesTiepoint[ i ].ProcessData.TrimmingCutCount[ j ] );
-					fprintf_s( JournalDataFile, "%d;", SETrimmingValues.SETrimmingValuesTiepoint[ i ].ProcessData.TrimmingCrossingCount[ j ] );
-				}	
-				fprintf_s( JournalDataFile, "\n" );
-				fflush(	JournalDataFile );
-				fclose(	JournalDataFile );
-				JournalDataFile = NULL;
+					SYSTEMTIME	Time;
+					GetLocalTime(&Time);
+
+					fprintf_s(JournalDataFile, "%03d;", TypeNo);																	//typ number
+					fprintf_s(JournalDataFile, "%06d;", SETrimmingValues.AssemblyDataCommon.Charge);						//charge number
+					fprintf_s(JournalDataFile, "%s;", SETrimmingValues.SETrimmingValuesTiepoint[i].ResultData.SerialCode);	//serial code
+					fprintf_s(JournalDataFile, "%d;", SETrimmingValues.SETrimmingValuesTiepoint[i].ResultData.SerialNumber);	//serial number
+					fprintf_s(JournalDataFile, "%d;", SETrimmingValues.AssemblyDataCommon.WpcNo);							 //wpc number
+					fprintf_s(JournalDataFile, "%d;", i + 1);																											//wp pos
+					fprintf_s(JournalDataFile, "%02d.%02d.%02d;", Time.wDay, Time.wMonth, Time.wYear);				    //date
+					fprintf_s(JournalDataFile, "%02d:%02d:%02d;", Time.wHour, Time.wMinute, Time.wSecond);				//time
+					fprintf_s(JournalDataFile, "0;");																															//user
+					for (int j = 0; j <= SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.CrossingCountEntire - 1; j++)
+					{
+						fprintf_s(JournalDataFile, "%.2f;", SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.TrimmingCutXPos[j]);
+						fprintf_s(JournalDataFile, "%.2f;", SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.TrimmingCutYPos[j]);
+						fprintf_s(JournalDataFile, "%.2f;", SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.TrimmingCutIp[j]);
+						fprintf_s(JournalDataFile, "%.2f;", SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.TrimmingCutChamberPressure[j]);
+						fprintf_s(JournalDataFile, "%d;", SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.TrimmingCutCount[j]);
+						fprintf_s(JournalDataFile, "%d;", SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.TrimmingCrossingCount[j]);
+					}
+					fprintf_s(JournalDataFile, "\n");
+					fflush(JournalDataFile);
+					fclose(JournalDataFile);
+					JournalDataFile = NULL;
+				}
 			}
 			//-- write cut file
 		}
@@ -2088,19 +2608,19 @@ int SETrimmingChamber::SaveNormalJournal( void )
 		if( JournalDataFile != NULL )
 		{
 			fprintf_s( JournalDataFile, "GbR-Typ;DatumUhrzeit;WT-Pos;"
-																	"RiDcpUG;RiDcpOG;RiDcp;RiDcnUG;RiDcnOG;RiDcn;IpContUG;IpContOG;IpCont;IhUG;IhOG;Ih;RhhUG;RhhOG;Rhh;"
-																	"ContaktUG;ContaktOG;Contakt;RhhUG;RhhOG;Rhh;IhUG;IhOG;Ih;RhKaltUG;RhkaltOG;RhKalt;"
-																	"IgrkUG;IgrkOG;Igrk;IlUG;IlOG;Il;RiDcnUG;RiDcnOG;RiDcn;IpreUG;IpreOG;Ipre;RiacUG;RiacOG,Riac;RiacStatUG;RiacStatOG;RiacStat;"
-																	"UnUG;UnOG;Un;"
-																	"UpUG;UpOG;Up;IpUG;IpOG;Ip;"
-																	"IlMaxUG;IlMaxOG;IlMax;IaIpnUG;IaIpnOG;IaIpn;Ip2UG;Ip2OG;Ip2;Un2UG;Un2OG;Un2;Ip3UG;Ip3OG;Ip3;Un3UG;Un3OG;Un3;Ip4UG;Ip4OG;Ip4;Un4UG;Un4OG;Un4;\n" );
+										"RiDcpUG;RiDcpOG;RiDcp;RiDcnUG;RiDcnOG;RiDcn;IpContUG;IpContOG;IpCont;IhUG;IhOG;Ih;RhhUG;RhhOG;Rhh;"
+										"ContaktUG;ContaktOG;Contakt;RhhUG;RhhOG;Rhh;IhUG;IhOG;Ih;RhKaltUG;RhkaltOG;RhKalt;"
+										"IgrkUG;IgrkOG;Igrk;IlUG;IlOG;Il;RiDcnUG;RiDcnOG;RiDcn;IpreUG;IpreOG;Ipre;RiacUG;RiacOG,Riac;RiacStatUG;RiacStatOG;RiacStat;"
+										"UnUG;UnOG;Un;"
+										"UpUG;UpOG;Up;IpUG;IpOG;Ip;"
+										"IlMaxUG;IlMaxOG;IlMax;IaIpnUG;IaIpnOG;IaIpn;Ip2UG;Ip2OG;Ip2;Un2UG;Un2OG;Un2;Ip3UG;Ip3OG;Ip3;Un3UG;Un3OG;Un3;Ip4UG;Ip4OG;Ip4;Un4UG;Un4OG;Un4;\n" );
 			fprintf_s( JournalDataFile, ";;;"
-																	"Ohm;Ohm;Ohm;Ohm;Ohm;Ohm;µA;µA;µA;mA;mA;mA;Ohm;Ohm;Ohm;"
-																	"1;1;1;Ohm;Ohm;Ohm;A;A;A;Ohm;Ohm;Ohm;"
-																	"µA;µA;µA;µA;µA;µA;Ohm;Ohm;Ohm;µA;µA;µA;Ohm;Ohm;Ohm;Ohm;Ohm;Ohm;"
-																	"V;V;V;"
-																	"V;V;V;mA;mA;mA;"
-																	"µA;µA;µA;mA;mA;mA;mA;mA;mA;mV;mV;mV;mA;mA;mA;mV;mV;mV;mA;mA;mA;mV;mV;mV;\n" ); 
+										"Ohm;Ohm;Ohm;Ohm;Ohm;Ohm;µA;µA;µA;mA;mA;mA;Ohm;Ohm;Ohm;"
+										"1;1;1;Ohm;Ohm;Ohm;A;A;A;Ohm;Ohm;Ohm;"
+										"µA;µA;µA;µA;µA;µA;Ohm;Ohm;Ohm;µA;µA;µA;Ohm;Ohm;Ohm;Ohm;Ohm;Ohm;"
+										"V;V;V;"
+										"V;V;V;mA;mA;mA;"
+										"µA;µA;µA;mA;mA;mA;mA;mA;mA;mV;mV;mV;mA;mA;mA;mV;mV;mV;mA;mA;mA;mV;mV;mV;\n" ); 
 			fflush(	JournalDataFile );
 			fclose(	JournalDataFile );
 			JournalDataFile = NULL;
@@ -2122,37 +2642,37 @@ int SETrimmingChamber::SaveNormalJournal( void )
 			GetLocalTime( &Time );
 
 
-			switch( NormalNumber )
+			switch ( eProcessType )
 			{
-				case PositionNormal:
-					fprintf_s( JournalDataFile, "Nr 1: Positionsnormal;" );	
-					break;
+			case ProcessType::MeasurePositionNormal:
+				fprintf_s(JournalDataFile, "Nr 1: Positionsnormal;");
+				break;
 
-				case HeaterNormal:
-					fprintf_s( JournalDataFile, "Nr 1: Heizernormal;" );	
-					break;
+			case ProcessType::MeasureHeaterNormal:
+				fprintf_s(JournalDataFile, "Nr 2: Heizernormal;");
+				break;
 
-				case UniversalNormal:
-					fprintf_s( JournalDataFile, "Nr 1: Universalnormal;" );	
-					break;
+			case ProcessType::MeasureUniversalNormal:
+				fprintf_s(JournalDataFile, "Nr 3: Universalnormal;");
+				break;
 
-				case UnNormal:
-					fprintf_s( JournalDataFile, "Nr 1: Un-Normal;" );	
-					break;
+			case ProcessType::MeasureUnNormal:
+				fprintf_s(JournalDataFile, "Nr 4: Un-Normal;");
+				break;
 
-				case IpNormal:
-					fprintf_s( JournalDataFile, "Nr 1: Ip-Normal;" );	
-					break;
+			case ProcessType::MeasureIpNormal:
+				fprintf_s(JournalDataFile, "Nr 5: Ip-Normal;");
+				break;
 
-				case IlmNormal:
-					fprintf_s( JournalDataFile, "Nr 1: Ilm-Mormal;" );	
-					break;
+			case ProcessType::MeasureIlmNormal:
+				fprintf_s(JournalDataFile, "Nr 6: Ilm-Mormal;");
+				break;
 			}
 
 			fprintf_s( JournalDataFile, "%02d.%02d.%02d %02d:%02d:%02d;", Time.wDay, Time.wMonth, Time.wYear, Time.wHour, Time.wMinute, Time.wSecond ); //date time
 			fprintf_s( JournalDataFile, "%d;", i + 1 );			
 				
-			if( NormalNumber == PositionNormal )
+			if( eProcessType == ProcessType::MeasurePositionNormal )
 			{
 				fprintf_s( JournalDataFile, "%.3f;", ParamNormalMeasure.ParamPositionNormal.ChkSensor[i].LowerLimit );
 				fprintf_s( JournalDataFile, "%.3f;", ParamNormalMeasure.ParamPositionNormal.ChkSensor[i].UpperLimit );
@@ -2175,7 +2695,7 @@ int SETrimmingChamber::SaveNormalJournal( void )
 				fprintf_s( JournalDataFile, ";;;;;;;;;;;;;;;" );
 			}
 
-			if( NormalNumber == HeaterNormal )
+			if( eProcessType == ProcessType::MeasureHeaterNormal )
 			{
 				fprintf_s( JournalDataFile, "0,00;" );
 				fprintf_s( JournalDataFile, "0,99;" );
@@ -2195,7 +2715,7 @@ int SETrimmingChamber::SaveNormalJournal( void )
 				fprintf_s( JournalDataFile, ";;;;;;;;;;;;" );
 			}
 
-			if( NormalNumber == UniversalNormal )
+			if( eProcessType == ProcessType::MeasureUniversalNormal )
 			{
 				fprintf_s( JournalDataFile, "%.3f;", ParamNormalMeasure.ParamUniversalNormal.ChkIgrk.LowerLimit );
 				fprintf_s( JournalDataFile, "%.3f;", ParamNormalMeasure.ParamUniversalNormal.ChkIgrk.UpperLimit );
@@ -2222,7 +2742,7 @@ int SETrimmingChamber::SaveNormalJournal( void )
 				fprintf_s( JournalDataFile, ";;;;;;;;;;;;;;;;;;" );
 			}
 
-			if( NormalNumber == UnNormal )
+			if( eProcessType == ProcessType::MeasureUnNormal )
 			{
 				fprintf_s( JournalDataFile, "%.3f;", ParamNormalMeasure.ParamUnNormal.ChkNernstVoltage.LowerLimit );
 				fprintf_s( JournalDataFile, "%.3f;", ParamNormalMeasure.ParamUnNormal.ChkNernstVoltage.UpperLimit );
@@ -2233,7 +2753,7 @@ int SETrimmingChamber::SaveNormalJournal( void )
 				fprintf_s( JournalDataFile, ";;;" );
 			}
 
-			if( NormalNumber == IpNormal )
+			if( eProcessType == ProcessType::MeasureIpNormal )
 			{
 				fprintf_s( JournalDataFile, "%.3f;", ParamNormalMeasure.ParamIpNormal.ChkUp.LowerLimit );
 				fprintf_s( JournalDataFile, "%.3f;", ParamNormalMeasure.ParamIpNormal.ChkUp.UpperLimit );
@@ -2247,7 +2767,7 @@ int SETrimmingChamber::SaveNormalJournal( void )
 				fprintf_s( JournalDataFile, ";;;;;;" );
 			}
 
-			if( NormalNumber == IlmNormal )
+			if( eProcessType == ProcessType::MeasureIlmNormal )
 			{
 				fprintf_s( JournalDataFile, "%.3f;", ParamNormalMeasure.ParamIlmNormal.ChkIlMax.LowerLimit );
 				fprintf_s( JournalDataFile, "%.3f;", ParamNormalMeasure.ParamIlmNormal.ChkIlMax.UpperLimit );
@@ -2688,7 +3208,7 @@ int SETrimmingChamber::TrimmingInitFine( int Tiepoint )
 }
 
 /*-------------------------------------------------------------------------------------------------------------------------*
- * function name        : void RotatePosition( int Tiepoint, float XPos, float YPos, float *XPosDash, float *YPosDash, 		 *
+ * function name        : void RotatePosition( int Tiepoint, float XPos, float YPos, float *XPosDash, float *YPosDash, 	   *
  *                               float *Phi )                                                                              *
  *                                                                                                                         *
  * input:               : int Tiepoint : tiepoint                                                                          *
@@ -2696,7 +3216,7 @@ int SETrimmingChamber::TrimmingInitFine( int Tiepoint )
  *                        float YPos : y position                                                                          *
  *                        float *XPosDash : pointer to x position (rotated)                                                *
  *                        float *YPosDash : pointer to y position (rotated)                                                *
- *        								float *Phi : pointer to angle                                                                    * 
+ *        								float *Phi : pointer to angle                                                      * 
  *                                                                                                                         *
  * output:              : int : return value                                                                               *
  *                                 0 = no error                                                                            *
@@ -3444,12 +3964,12 @@ int SETrimmingChamber::CalculateNewPos( int Tiepoint, bool RawTrimm )
  *                                                                                                                         *
  * description:         : This is the constructor function.                                                                *
  *-------------------------------------------------------------------------------------------------------------------------*/
-SETrimmingChamber::SETrimmingChamber( void )
+SETrimmingChamber::SETrimmingChamber( int i )
 {
 	ReferenceCell = new SEReferenceCell((ChamberId * 2));
 	TrimmCell = new SETrimmingCell((ChamberId * 2)-1);
 
-	ProcessStep = 0;
+	ProcessStep = EProcessStep::Initialization;
 	NormalStep = 0;
 	StabilityStep = 0;
 	ParameterSetOk = false;
@@ -3483,8 +4003,8 @@ SETrimmingChamber::SETrimmingChamber( void )
 		}
 	}
 
-	_mkdir( DATA_SAVE_LOCATION );							      //make directory for measure data
-	_mkdir( CONFIG_DATA_LOCATION );						      //make directory for config data
+	_mkdir( DATA_SAVE_LOCATION );	//make directory for measure data
+	_mkdir( CONFIG_DATA_LOCATION );	//make directory for config data
 }
 
 /*-------------------------------------------------------------------------------------------------------------------------*
@@ -3504,7 +4024,7 @@ SETrimmingChamber::SETrimmingChamber( int ChamberId, SEComMicroLas *ComMicroLas,
 	this->ChamberId = ChamberId;
 	this->ComMicroLas = ComMicroLas;
 	ClearAllValues();
-	ProcessStep = 0;
+	ProcessStep = EProcessStep::Initialization;
 	NormalStep = 0;
 	StabilityStep = 0;
 	ParameterSetOk = false;
@@ -3524,8 +4044,8 @@ SETrimmingChamber::SETrimmingChamber( int ChamberId, SEComMicroLas *ComMicroLas,
 	#endif
 	DeinstallThreadRequest = false;
 
-	_mkdir( DATA_SAVE_LOCATION );							      //make directory for measure data
-	_mkdir( CONFIG_DATA_LOCATION );						      //make directory for config data
+	_mkdir( DATA_SAVE_LOCATION );	//make directory for measure data
+	_mkdir( CONFIG_DATA_LOCATION );	//make directory for config data
 
 	DigitalOut = 0;
 	IgnoreNewPressure = false;
@@ -3935,7 +4455,7 @@ int SETrimmingChamber::ReadResult( ResultDataPositionNormal * ResultPositionNorm
 		ResultPositionNormal->RiDcn = SENormalValues[Tiepoint - 1].ResultDataPosition.RiDcn;
 		ResultPositionNormal->RiDcp = SENormalValues[Tiepoint - 1].ResultDataPosition.RiDcp;
 		ResultPositionNormal->Rhhot = SENormalValues[Tiepoint - 1].ResultDataPosition.Rhhot;	
-		ResultPositionNormal->Ih = SENormalValues[Tiepoint - 1].ResultDataPosition.Ih;
+		ResultPositionNormal->Ih     = SENormalValues[Tiepoint - 1].ResultDataPosition.Ih;
 		ResultPositionNormal->IpCont = SENormalValues[Tiepoint - 1].ResultDataPosition.IpCont;
 		ResultPositionNormal->Status = SENormalValues[Tiepoint - 1].ResultDataPosition.Status;
 	}
@@ -3997,7 +4517,6 @@ int SETrimmingChamber::ReadResult( ResultDataUniversalNormal * ResultUniversalNo
 		ResultUniversalNormal->RiAc = SENormalValues[Tiepoint - 1].ResultDataUniversal.RiAc;
 		ResultUniversalNormal->Status = SENormalValues[Tiepoint - 1].ResultDataUniversal.Status;
 	}
-
 	return RetVal;	
 }
 
@@ -4260,94 +4779,69 @@ int SETrimmingChamber::StartProcess( ProcessType Type )
 {
 	int RetVal = 0;
 
-	ProcessTrimmingActive = false;
-	ProcessNormalActive = false;
-	NormalNumber = 0;
+	ProcessType TypeTemp = Type;;
+	eProcessType = ProcessType::Undefined; //RH: ggf. PorcessType bereits hier setzten, 
+	//dann muss nicht in switch case noch einmal gesetzen werden
+
 	DigitalOut = 0;
 	DigitalIn = 0;
 	IgnoreNewPressure = false;
-	ProcessType TypeTemp;
-
-	TypeTemp = Type;
 
 	ClearAllValues();
 
-	if( TypeTemp == MeasureTrimmingSelection ) 
+	if( TypeTemp == ProcessType::MeasureTrimmingSelection ) 
 	{
 		if( SETrimmingValues.AssemblyDataCommon.ProcessType == 1 )
 		{
-			TypeTemp = MeasureSelection;
+			TypeTemp = ProcessType::MeasureSelection;
 		}
 		else
 		{
-			TypeTemp = MeasureTrimming;
+			TypeTemp = ProcessType::MeasureTrimming;
 		}	
 	}
-	
+
+#if defined _INDUTRON_PRINT_MORE
+	printf("##TypeTemp: %d\n", TypeTemp);
+#endif
+
 	switch( TypeTemp )
 	{
-		case MeasureTrimming:
-		case MeasureSelection:
+		case ProcessType::MeasureTrimming:			// measure and trimming
+		case ProcessType::MeasureSelection:			// measure and selection
+		case ProcessType::Ip4MeasureUNernstControl: //10: IP4 measurement under Nernst voltage control  
+		case ProcessType::Ip4Measure2PointUp:       //11: IP4 measurement via 2-point UP measurement
+		{
+			// chamber status 
 			ChamberState = INF_GENERATE_TEST_SEQUENCE;
-			ReferenceCell->GenerateAndTransmittSequence();
+
+			// test sequence for reference cell
+			ReferenceCell->GenerateAndTransmittSequence( TypeTemp );
 			ReferenceCell->StartSequence();
-			
+
+			// test sequence for measurement cell
 			TrimmCell->GenerateAndTransmittSequence( TypeTemp );
 			TrimmCell->StartSequence();
 
-			ProcessTrimmingActive = true;
-
+			//ProcessTrimmingActive = true;
+			eProcessType = TypeTemp;
 			ChamberState = INF_START_TEST_SEQUENCE;
 			break;
+		}
+		case ProcessType::MeasurePositionNormal:
+		case ProcessType::MeasureHeaterNormal:
+		case ProcessType::MeasureUniversalNormal:
+		case ProcessType::MeasureUnNormal:
+		case ProcessType::MeasureIpNormal:
+		case ProcessType::MeasureIlmNormal:
 
-		case MeasurePositionNormal:
+			// test sequence calibration board for wiring and position check
 			TrimmCell->GenerateAndTransmittSequence( TypeTemp );
 			TrimmCell->StartSequence();
 
-			ProcessNormalActive = true;
-			NormalNumber = PositionNormal;
+			eProcessType = TypeTemp;
 			break;
 
-		case MeasureHeaterNormal:
-			TrimmCell->GenerateAndTransmittSequence( TypeTemp );
-			TrimmCell->StartSequence();
-
-			ProcessNormalActive = true;
-			NormalNumber = HeaterNormal;
-			break;
-
-		case MeasureUniversalNormal:
-			TrimmCell->GenerateAndTransmittSequence( TypeTemp );
-			TrimmCell->StartSequence();
-
-			ProcessNormalActive = true;
-			NormalNumber = UniversalNormal;
-			break;
-
-		case MeasureUnNormal:
-			TrimmCell->GenerateAndTransmittSequence( TypeTemp );
-			TrimmCell->StartSequence();
-
-			ProcessNormalActive = true;
-			NormalNumber = UnNormal;
-			break;
-
-		case MeasureIpNormal:
-			TrimmCell->GenerateAndTransmittSequence( TypeTemp );
-			TrimmCell->StartSequence();
-
-			ProcessNormalActive = true;
-			NormalNumber = IpNormal;
-			break;
-
-		case MeasureIlmNormal:
-			TrimmCell->GenerateAndTransmittSequence( TypeTemp );
-			TrimmCell->StartSequence();
-
-			ProcessNormalActive = true;
-			NormalNumber = IlmNormal;
-			break;
-			
 		default:
 			RetVal = -1; 
 			break;
@@ -4415,7 +4909,7 @@ int SETrimmingChamber::ClearAllValues( void )
 	{
 		try
 		{
-			ProcessStep = 0;
+			ProcessStep = EProcessStep::Initialization;
 			NormalStep = 0;
 			StabilityStep = 0;
 			ChamberPressureActual = 0.0f;

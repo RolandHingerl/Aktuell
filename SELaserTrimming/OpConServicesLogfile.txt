@@ -1,8 +1,21 @@
-16.11.2022 - 07:46:19:498: ---------------------------------
-16.11.2022 - 07:46:19:498: SELasertrimming Version: V2.07DBG
-16.11.2022 - 07:46:19:498: ---------------------------------
-16.11.2022 - 07:46:19:500: ClearAllValues Chamber Start
-16.11.2022 - 07:46:19:500: ClearAllValues Chamber End
-16.11.2022 - 07:46:19:501: ClearAllValues Chamber Start
-16.11.2022 - 07:46:19:501: ClearAllValues Chamber End
-16.11.2022 - 07:46:19:502: Chamber[1]:Main:Waiting for plc connection...
+22.02.2023 - 11:36:18:923: ---------------------------------
+22.02.2023 - 11:36:18:938: SELasertrimming Version: Vx.xxDBG
+22.02.2023 - 11:36:18:938: ---------------------------------
+22.02.2023 - 11:36:18:939: ClearAllValues Chamber Start
+22.02.2023 - 11:36:18:939: ClearAllValues Chamber End
+22.02.2023 - 11:36:18:943: ClearAllValues Chamber Start
+22.02.2023 - 11:36:18:943: ClearAllValues Chamber End
+22.02.2023 - 11:36:18:945: Chamber[1]:Main:Waiting for plc connection...
+22.02.2023 - 11:36:18:945: HandleCheckStatisticDelete: Running!
+22.02.2023 - 11:36:19:070: Chamber[1]:Main:Plc connected!
+22.02.2023 - 11:36:19:070: Chamber[1]:Main:Waiting for plc parameter data...
+22.02.2023 - 11:36:19:070: Chamber[1]:Main:Plc data present!
+22.02.2023 - 11:36:19:070: Chamber[1]:Main:Waiting for initializing...
+22.02.2023 - 11:36:19:070: Chamber[1]:LoadRetainData: Load Data failed!
+22.02.2023 - 11:36:19:084: Chamber[1]:LSTestDLLOpen=0xF0000003
+22.02.2023 - 11:36:19:085: Cell[1]:MCxAssignCell=f
+22.02.2023 - 11:36:19:085: Cell[1]:MCxStop=0
+22.02.2023 - 11:36:19:085: Cell[2]:MCxAssignCell=10
+22.02.2023 - 11:36:19:085: Cell[2]:MCxStop=0
+22.02.2023 - 11:36:19:085: Chamber[1]:Main:Initialization ready!
+22.02.2023 - 11:36:19:085: Chamber[1]:Main:Waiting for advov cards ready ...

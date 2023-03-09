@@ -20,135 +20,85 @@
 #include "..\Library\LSTestDLL.h"
 #include "..\Library\MCDataEx.h"
 #endif
-HANDLE hThreadHandleAction[2][32] = { { NULL, 
-																				NULL, 
-																				NULL, 
-																				NULL, 
-																				NULL, 
-																				NULL, 
-																				NULL, 
-																				NULL, 
-																				NULL, 
-																				NULL,
-																				NULL, 
-																				NULL, 
-																				NULL, 
-																				NULL, 
-																				NULL, 
-																				NULL, 
-																				NULL, 
-																				NULL, 
-																				NULL, 
-																				NULL,
-																				NULL, 
-																				NULL, 
-																				NULL, 
-																				NULL, 
-																				NULL, 
-																				NULL, 
-																				NULL, 
-																				NULL,
-																				NULL,
-																				NULL,
-																				NULL, 
-																				NULL },
-																			{ NULL, 
-																				NULL, 
-																				NULL, 
-																				NULL, 
-																				NULL, 
-																				NULL, 
-																				NULL, 
-																				NULL, 
-																				NULL, 
-																				NULL,
-																				NULL, 
-																				NULL, 
-																				NULL, 
-																				NULL, 
-																				NULL, 
-																				NULL, 
-																				NULL, 
-																				NULL, 
-																				NULL, 
-																				NULL,
-																				NULL, 
-																				NULL, 
-																				NULL, 
-																				NULL, 
-																				NULL, 
-																				NULL, 
-																				NULL, 
-																				NULL,
-																				NULL,
-																				NULL,
-																				NULL, 
-																				NULL }};
+HANDLE hThreadHandleAction[2][32] = {
+	{ NULL, NULL, NULL,	NULL, NULL, NULL,
+	  NULL, NULL, NULL, NULL, NULL, NULL,
+	  NULL, NULL, NULL, NULL, NULL, NULL,
+	  NULL, NULL, NULL, NULL, NULL, NULL,
+	  NULL, NULL, NULL, NULL, NULL, NULL,
+	  NULL, NULL },
+	{ NULL, NULL, NULL,	NULL, NULL, NULL,
+	  NULL, NULL, NULL, NULL, NULL, NULL,
+	  NULL, NULL, NULL, NULL, NULL, NULL,
+	  NULL, NULL, NULL, NULL, NULL, NULL,
+	  NULL, NULL, NULL, NULL, NULL, NULL,
+	  NULL, NULL } }; 
 
-LPTHREAD_START_ROUTINE ActionStartRoutine[2][32] = { { ( LPTHREAD_START_ROUTINE ) HandleAction1Chamber1,
-																											 ( LPTHREAD_START_ROUTINE ) HandleAction2Chamber1,
-																											 ( LPTHREAD_START_ROUTINE ) HandleAction3Chamber1,
-																											 ( LPTHREAD_START_ROUTINE ) HandleAction4Chamber1,
-																											 ( LPTHREAD_START_ROUTINE ) HandleAction5Chamber1,
-																											 ( LPTHREAD_START_ROUTINE ) HandleAction6Chamber1,
-																											 ( LPTHREAD_START_ROUTINE ) HandleAction7Chamber1,
-																											 ( LPTHREAD_START_ROUTINE ) HandleAction8Chamber1,
-																											 ( LPTHREAD_START_ROUTINE ) HandleAction9Chamber1,
-																											 ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
-																											 ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
-																											 ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
-																											 ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
-																											 ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
-																											 ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
-																											 ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
-																											 ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
-																											 ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
-																											 ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
-																											 ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
-																											 ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
-																											 ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
-																											 ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
-																											 ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
-																											 ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
-																											 ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
-																											 ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
-																											 ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
-																											 ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
-																											 ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
-																											 ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
-																											 ( LPTHREAD_START_ROUTINE ) HandleActionDummy },
-																										 { ( LPTHREAD_START_ROUTINE ) HandleAction1Chamber2,
-																											 ( LPTHREAD_START_ROUTINE ) HandleAction2Chamber2,
-																											 ( LPTHREAD_START_ROUTINE ) HandleAction3Chamber2,
-																											 ( LPTHREAD_START_ROUTINE ) HandleAction4Chamber2,
-																											 ( LPTHREAD_START_ROUTINE ) HandleAction5Chamber2,
-																											 ( LPTHREAD_START_ROUTINE ) HandleAction6Chamber2,
-																											 ( LPTHREAD_START_ROUTINE ) HandleAction7Chamber2,
-																											 ( LPTHREAD_START_ROUTINE ) HandleAction8Chamber2,
-																											 ( LPTHREAD_START_ROUTINE ) HandleAction9Chamber2,
-																											 ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
-																											 ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
-																											 ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
-																											 ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
-																											 ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
-																											 ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
-																											 ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
-																											 ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
-																											 ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
-																											 ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
-																											 ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
-																											 ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
-																											 ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
-																											 ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
-																											 ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
-																											 ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
-																											 ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
-																											 ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
-																											 ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
-																											 ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
-																											 ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
-																											 ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
-																											 ( LPTHREAD_START_ROUTINE ) HandleActionDummy } };
+LPTHREAD_START_ROUTINE ActionStartRoutine[2][32] = {
+	{ ( LPTHREAD_START_ROUTINE ) HandleAction1Chamber1, 
+	  ( LPTHREAD_START_ROUTINE ) HandleAction2Chamber1,
+	  ( LPTHREAD_START_ROUTINE ) HandleAction3Chamber1,
+	  ( LPTHREAD_START_ROUTINE ) HandleAction4Chamber1,
+	  ( LPTHREAD_START_ROUTINE ) HandleAction5Chamber1,
+	  ( LPTHREAD_START_ROUTINE ) HandleAction6Chamber1,
+	  ( LPTHREAD_START_ROUTINE ) HandleAction7Chamber1,
+	  ( LPTHREAD_START_ROUTINE ) HandleAction8Chamber1,
+	  ( LPTHREAD_START_ROUTINE ) HandleAction9Chamber1,
+	  ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
+	  ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
+	  ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
+	  ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
+	  ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
+	  ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
+	  ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
+	  ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
+	  ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
+	  ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
+	  ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
+	  ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
+	  ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
+	  ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
+	  ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
+	  ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
+	  ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
+	  ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
+	  ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
+	  ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
+	  ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
+	  ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
+	  ( LPTHREAD_START_ROUTINE ) HandleActionDummy },
+    { ( LPTHREAD_START_ROUTINE ) HandleAction1Chamber2,
+	  ( LPTHREAD_START_ROUTINE ) HandleAction2Chamber2,
+	  ( LPTHREAD_START_ROUTINE ) HandleAction3Chamber2,
+	  ( LPTHREAD_START_ROUTINE ) HandleAction4Chamber2,
+	  ( LPTHREAD_START_ROUTINE ) HandleAction5Chamber2,
+	  ( LPTHREAD_START_ROUTINE ) HandleAction6Chamber2,
+	  ( LPTHREAD_START_ROUTINE ) HandleAction7Chamber2,
+	  ( LPTHREAD_START_ROUTINE ) HandleAction8Chamber2,
+	  ( LPTHREAD_START_ROUTINE ) HandleAction9Chamber2,
+	  ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
+	  ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
+	  ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
+	  ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
+	  ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
+	  ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
+	  ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
+	  ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
+	  ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
+	  ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
+	  ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
+	  ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
+	  ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
+	  ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
+	  ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
+	  ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
+	  ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
+	  ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
+	  ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
+	  ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
+	  ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
+	  ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
+	  ( LPTHREAD_START_ROUTINE ) HandleActionDummy } };
 
 SETrimmingChamber *SETrimmChamber[CHAMBER_COUNT];
 SEComPlc *ComPlc[CHAMBER_COUNT];
@@ -211,36 +161,59 @@ void MeasInTrimmingCellChamber1( void )
 			{
 				//split index
 				RetVal = MeasSplittResIdx( LSTestHandle, &lMainIndex, &lSubIndex, &lLocIdx, tTFlwResult.ResultIdx );
-
+#if 0
+#if defined (_INDUTRON_PRINT_MORE)
+				printf("###MeasInTrimmingCellChamber1### lMainIndex=%d, lSubIndex=%d, lLocIdx=%d, Value=%f\n", lMainIndex, lSubIndex, lLocIdx, tTFlwResult.MeasRes[0]);
+#endif
+#endif
 				//check ok
 				if( RetVal == 0 )
 				{
-					if( ( lMainIndex != IMT_RiAC && lMainIndex != IMT_IPu && lMainIndex != IMT_RHh && lMainIndex != IMT_PH) || lSubIndex == 1 || lSubIndex == 2 || lSubIndex == 3 )
+				
+					switch ( SETrimmChamber[CHAMBER1]->getProcessType() )
 					{
-						//repeat over all tiepoints (running variable i)
-						for( int i = 0; i < CELL_TIEPOINT_COUNT; i++ )
-						{
-							if( ( lSubIndex != 1 ) &&
-								( lSubIndex != 2 ) &&
-								( lSubIndex != 3 ) )
+					case ProcessType::Ip4MeasureUNernstControl:   //10: IP4 measurement under Nernst voltage control  
+					case ProcessType::Ip4Measure2PointUp:		  //11:	IP4 measurement via 2-point UP measurement
+						//the lSubIndex of the cyclic measurements are <900 (900 .. 999)
+						if ( lSubIndex < 900 )
+						{							//repeat over all tiepoints (running variable i)
+							for (int i = 0; i < CELL_TIEPOINT_COUNT; i++)
 							{
-								lSubIndex = 0;
+								//handle measured values
+								SETrimmChamber[CHAMBER1]->GetTrimmingCell()->HandleTestSequenceValues(0, i, lMainIndex, lSubIndex, tTFlwResult.MeasRes[i], tTFlwResult.TestTime * 1000, 0);
 							}
-							//handle measured values
-							SETrimmChamber[CHAMBER1]->GetTrimmingCell()->HandleTestSequenceValues( 0, i, lMainIndex, lSubIndex, tTFlwResult.MeasRes[i], tTFlwResult.TestTime * 1000 ,0 );
-						}																								
+						}
+						break;
+					default:
+						//?RH: Warum diese Unterscheidung 
+						if ((lMainIndex != IMT_RiAC && lMainIndex != IMT_IPu && lMainIndex != IMT_RHh && lMainIndex != IMT_PH) || lSubIndex == 1 || lSubIndex == 2 || lSubIndex == 3)
+						{
+							//repeat over all tiepoints (running variable i)
+							for (int i = 0; i < CELL_TIEPOINT_COUNT; i++)
+							{
+								if ((lSubIndex != 1) &&
+									(lSubIndex != 2) &&
+									(lSubIndex != 3))
+								{
+									lSubIndex = 0;
+								}
+								//handle measured values
+								SETrimmChamber[CHAMBER1]->GetTrimmingCell()->HandleTestSequenceValues(0, i, lMainIndex, lSubIndex, tTFlwResult.MeasRes[i], tTFlwResult.TestTime * 1000, 0);
+							}
+						}
+						break;
 					}
 				}
-
+			
 				if( tTFlwResult.TFlowEnd != 0 ) 
 				{
 					SETrimmChamber[CHAMBER1]->GetTrimmingCell()->SetSequenceFinished( true );
+					SETrimmChamber[CHAMBER1]->GetTrimmingCell()->SequenceStarted = false;		
 				}
 				else
 				{
 					SETrimmChamber[CHAMBER1]->GetTrimmingCell()->SetSequenceFinished( false );
 				}
-
 			}
 			SETrimmChamber[CHAMBER1]->GetTrimmingCell()->SetReadDataAdvov( false );
 			Sleep( 100 );
@@ -286,9 +259,9 @@ LONG MeasInFastReferenceCellChamber1( WORD wFUIdx,WORD wPartIdx,/*eIMTBasTypes*/
  *-------------------------------------------------------------------------------------------------------------------------*/
 void MeasInReferenceCellChamber1( void )
 {
-	int RetVal = 0;																													//return value
-	TFLWRESULT tTFlwResult; 																								//flow result
-	LONG lMainIndex, lSubIndex, lLocIdx;																		//split index
+	int RetVal = 0;		//return value
+	TFLWRESULT tTFlwResult; //flow result
+	LONG lMainIndex, lSubIndex, lLocIdx;//split index
 	
 	//endless loop (thread)
 	do
@@ -298,22 +271,40 @@ void MeasInReferenceCellChamber1( void )
 			//get result
 			SETrimmChamber[CHAMBER1]->GetReferenceCell()->SetReadDataAdvov( true );
 			RetVal = MCxTFlowResult( LSTestHandle, 2, &tTFlwResult );
-
 			//check ok
-			if( ( RetVal == 0 ) && ( tTFlwResult.ResultIdx != 0 ) )
+			if ((RetVal == 0) && (tTFlwResult.ResultIdx != 0))
 			{
-				//split index
-				RetVal = MeasSplittResIdx( LSTestHandle, &lMainIndex, &lSubIndex, &lLocIdx, tTFlwResult.ResultIdx );
-
 				//check ok
-				if( RetVal == 0 )
+				if ((RetVal == 0) && (tTFlwResult.ResultIdx != 0))
 				{
-					//repeat over all tiepoints (running variable i)
-					for( int i = 0; i < CELL_TIEPOINT_COUNT; i++ )
+					//split index
+					RetVal = MeasSplittResIdx(LSTestHandle, &lMainIndex, &lSubIndex, &lLocIdx, tTFlwResult.ResultIdx);
+
+					//check ok
+					if (RetVal == 0)
 					{
-						//handle measured values
-						SETrimmChamber[CHAMBER1]->GetReferenceCell()->HandleTestSequenceValues( 0, i, lMainIndex, 0, tTFlwResult.MeasRes[i], tTFlwResult.TestTime * 1000 ,0 );
+						//repeat over all tiepoints (running variable i)
+						for (int i = 0; i < CELL_TIEPOINT_COUNT; i++)
+						{
+							//handle measured values
+							if (lSubIndex > 900)
+							{
+								//RH: no cyclic measurements at recference cell
+								//RH: cyclic measurement
+								lSubIndex = 0;
+							}
+							SETrimmChamber[CHAMBER1]->GetReferenceCell()->HandleTestSequenceValues(0, i, lMainIndex, lLocIdx, tTFlwResult.MeasRes[i], tTFlwResult.TestTime * 1000, 0);
+						}
 					}
+				}
+				if (tTFlwResult.TFlowEnd != 0)
+				{
+					SETrimmChamber[CHAMBER1]->GetReferenceCell()->SetSequenceFinished(true);
+					SETrimmChamber[CHAMBER1]->GetReferenceCell()->SequenceStarted = false;
+				}
+				else
+				{
+					SETrimmChamber[CHAMBER1]->GetReferenceCell()->SetSequenceFinished(false);
 				}
 			}
 			SETrimmChamber[CHAMBER1]->GetReferenceCell()->SetReadDataAdvov( false );
@@ -338,7 +329,8 @@ void HandleChamber1( void )
 	do
 	{
 		SETrimmChamber[CHAMBER1]->HandleProcess(); 
-		Sleep(100);
+		//Dll bringt manchmal MVAL Ueberlauf
+		Sleep(100+200);
 	}while( SETrimmChamber[CHAMBER1]->DeinstallThreadRequested() == false );	
 
 	ExitThread(0);
@@ -677,9 +669,14 @@ void HandleAction2Chamber1( void )
 			SETrimmChamber[CHAMBER1]->InstallThread( (LPTHREAD_START_ROUTINE) MeasInTrimmingCellChamber1, 
 																		(LPTHREAD_START_ROUTINE) MeasInReferenceCellChamber1, 
 																		(LPTHREAD_START_ROUTINE) HandleChamber1, 
-																		MeasInFastTrimmingCellChamber1, 
-																		MeasInFastReferenceCellChamber1 );
-			SETrimmChamber[CHAMBER1]->StartProcess( MeasureTrimmingSelection );
+																		MeasInFastTrimmingCellChamber1, MeasInFastReferenceCellChamber1 );
+#if defined _INDUTRON_PRINT_MORE
+			//RH:
+			//SETrimmChamber[CHAMBER1]->StartProcess( MeasureTrimmingSelection );
+			printf("## ProcessType: %d\n", (ProcessType)ComPlc[CHAMBER1]->GetAssemblyData().AssemblyDataCommon.ProcessType);
+#endif
+			SETrimmChamber[CHAMBER1]->StartProcess( (ProcessType)ComPlc[CHAMBER1]->GetAssemblyData().AssemblyDataCommon.ProcessType );
+
 			ComPlc[CHAMBER1]->WriteActionStartedFlag( 2, true );
 			do
 			{
@@ -824,7 +821,12 @@ void HandleAction7Chamber1( void )
 																			NULL, 
 																			MeasInFastTrimmingCellChamber1, 
 																			MeasInFastReferenceCellChamber1 );
-		SETrimmChamber[CHAMBER1]->StartProcess( MeasureTrimmingSelection );
+#if defined _INDUTRON_PRINT_MORE
+		//RH:
+		//SETrimmChamber[CHAMBER1]->StartProcess( MeasureTrimmingSelection );
+		printf("## ProcessType: %d\n", (ProcessType)ComPlc[CHAMBER1]->GetAssemblyData().AssemblyDataCommon.ProcessType);
+#endif
+		SETrimmChamber[CHAMBER1]->StartProcess( (ProcessType)ComPlc[CHAMBER1]->GetAssemblyData().AssemblyDataCommon.ProcessType );
 		do
 		{
 			ActTimeout++;																												//increment act timeout
@@ -864,28 +866,28 @@ void HandleAction8Chamber1( void )
 																			NULL );
 		switch( ComPlc[CHAMBER1]->GetNormalNumber( ) )
 		{
-			case 1:
-				SETrimmChamber[CHAMBER1]->StartProcess( MeasurePositionNormal );
+		case NormalNumber::PositionNormal:
+				SETrimmChamber[CHAMBER1]->StartProcess( ProcessType::MeasurePositionNormal );
 				break;
 
-			case 2:
-				SETrimmChamber[CHAMBER1]->StartProcess( MeasureHeaterNormal );
+		case NormalNumber::HeaterNormal:
+				SETrimmChamber[CHAMBER1]->StartProcess( ProcessType::MeasureHeaterNormal );
 				break;
 
-			case 3:
-				SETrimmChamber[CHAMBER1]->StartProcess( MeasureUniversalNormal );
+		case NormalNumber::UniversalNormal:
+				SETrimmChamber[CHAMBER1]->StartProcess( ProcessType::MeasureUniversalNormal );
 				break;
 
-			case 4:
-				SETrimmChamber[CHAMBER1]->StartProcess( MeasureUnNormal );
+		case NormalNumber::UnNormal:
+				SETrimmChamber[CHAMBER1]->StartProcess( ProcessType::MeasureUnNormal );
 				break;
 
-			case 5:
-				SETrimmChamber[CHAMBER1]->StartProcess( MeasureIpNormal );
+		case NormalNumber::IpNormal:
+				SETrimmChamber[CHAMBER1]->StartProcess( ProcessType::MeasureIpNormal );
 				break;
 
-			case 6:
-				SETrimmChamber[CHAMBER1]->StartProcess( MeasureIlmNormal );
+		case NormalNumber::IlmNormal:
+				SETrimmChamber[CHAMBER1]->StartProcess( ProcessType::MeasureIlmNormal );
 				break;
 
 			default:
@@ -993,7 +995,7 @@ void HandleAction2Chamber2( void )
 																		(LPTHREAD_START_ROUTINE) HandleChamber2, 
 																		MeasInFastTrimmingCellChamber2, 
 																		MeasInFastReferenceCellChamber2 );
-			SETrimmChamber[CHAMBER2]->StartProcess( MeasureTrimmingSelection );
+			SETrimmChamber[CHAMBER2]->StartProcess(ProcessType::MeasureTrimmingSelection );
 			ComPlc[CHAMBER2]->WriteActionStartedFlag( 2, true );
 			do
 			{
@@ -1136,7 +1138,8 @@ void HandleAction7Chamber2( void )
 																			NULL, 
 																			MeasInFastTrimmingCellChamber2, 
 																			MeasInFastReferenceCellChamber2 );
-		SETrimmChamber[CHAMBER2]->StartProcess( MeasureTrimmingSelection );
+
+		SETrimmChamber[CHAMBER2]->StartProcess(ProcessType::MeasureTrimmingSelection );
 		do
 		{
 			ActTimeout++;																												//increment act timeout
@@ -1174,35 +1177,35 @@ void HandleAction8Chamber2( void )
 																			(LPTHREAD_START_ROUTINE) HandleChamber2, 
 																			NULL, 
 																			NULL );
-		switch( ComPlc[CHAMBER2]->GetNormalNumber( ) )
+		switch (ComPlc[CHAMBER2]->GetNormalNumber())
 		{
-			case 1:
-				SETrimmChamber[CHAMBER2]->StartProcess( MeasurePositionNormal );
-				break;
+		case NormalNumber::PositionNormal:
+			SETrimmChamber[CHAMBER2]->StartProcess(ProcessType::MeasurePositionNormal);
+			break;
 
-			case 2:
-				SETrimmChamber[CHAMBER2]->StartProcess( MeasureHeaterNormal );
-				break;
+		case NormalNumber::HeaterNormal:
+			SETrimmChamber[CHAMBER2]->StartProcess(ProcessType::MeasureHeaterNormal);
+			break;
 
-			case 3:
-				SETrimmChamber[CHAMBER2]->StartProcess( MeasureUniversalNormal );
-				break;
+		case NormalNumber::UniversalNormal:
+			SETrimmChamber[CHAMBER2]->StartProcess(ProcessType::MeasureUniversalNormal);
+			break;
 
-			case 4:
-				SETrimmChamber[CHAMBER2]->StartProcess( MeasureUnNormal );
-				break;
+		case NormalNumber::UnNormal:
+			SETrimmChamber[CHAMBER2]->StartProcess(ProcessType::MeasureUnNormal);
+			break;
 
-			case 5:
-				SETrimmChamber[CHAMBER2]->StartProcess( MeasureIpNormal );
-				break;
+		case NormalNumber::IpNormal:
+			SETrimmChamber[CHAMBER2]->StartProcess(ProcessType::MeasureIpNormal);
+			break;
 
-			case 6:
-				SETrimmChamber[CHAMBER2]->StartProcess( MeasureIlmNormal );
-				break;
+		case NormalNumber::IlmNormal:
+			SETrimmChamber[CHAMBER2]->StartProcess(ProcessType::MeasureIlmNormal);
+			break;
 
-			default:
+		default:
 
-				break;
+			break;
 
 		}
 
@@ -1464,7 +1467,9 @@ int ResultReadChamber1( unsigned int SubId, unsigned int Tiepoint )
 			//ilm normal result
 			RetVal = SETrimmChamber[CHAMBER1]->ReadResult( ComPlc[CHAMBER1]->GetResultDataIlmNormalAddress(), Tiepoint );
 			break;
-
+		case 99:
+			 MCxCalib(LSTestHandle, (LONG)pow(2.0f, 1 - 1));
+			 break;
 		default:
 			;
 			break;
