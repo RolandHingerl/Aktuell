@@ -102,8 +102,8 @@ BEGIN_ENUM(eIMTBasTypes)
   ENUMITEM ( IMT_RiB ),        /* RiB-Messung */
   ENUMITEM ( IMT_RiPuls ),     /* RiPuls-Messung: */
   ENUMITEM ( IMT_RiPulsUN ),   /* RiPuls-Messung: UN (Uvor,Upuls,Unach) */
-  ENUMITEM ( IMT_dtElecCap ),    /* Zeitwert RE-Elektrodenkapazität */
-  ENUMITEM ( IMT_ElecCap ),      /* RE-Elektrodenkapazität */
+  ENUMITEM ( IMT_dtElecCap ),  /* Zeitwert RE-Elektrodenkapazität */
+  ENUMITEM ( IMT_ElecCap ),    /* RE-Elektrodenkapazität */
   ENUMITEM ( IMT_RiACp ),      /* Ri_P-Meßwert (Pseudo-Typ) */
   ENUMITEM ( IMT_UPmin ),      /* UP,min bei Fensterüberwachung */
   ENUMITEM ( IMT_UPmax ),      /* UP,max bei Fensterüberwachung */

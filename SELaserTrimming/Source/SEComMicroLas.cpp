@@ -454,25 +454,6 @@ int SEComMicroLas::TrimmingCut( float StartX, float StartY, float StartZ, float 
 	float LaserPowerPercent = 0.0f;
 
 	LaserPowerPercent = LaserPower * 100 * 20 / 50;													//LaserPowerPercent[%] = LaserPower[W] * 100[%] * Teiler[1] / Laserleistung[W]
-
-	/*if(TimeDiffIdx < 100)
-	{
-		TimeDiff[TimeDiffIdx++] =  GetActualSystemTimeMs();
-	}
-	else
-	{
-		if(TimeDiffIdx == 100)
-		{
-			for(int i = 0; i < 100; i++)
-			{
-				printf("TimeDiff=%lld\n", TimeDiff[i]);
-			}
-			TimeDiffIdx++;
-		}
-	}	*/
-
-
-
   
 	if( SocketConnected == true )
 	{

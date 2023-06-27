@@ -44,7 +44,7 @@ LPTHREAD_START_ROUTINE ActionStartRoutine[2][32] = {
 	  ( LPTHREAD_START_ROUTINE ) HandleAction7Chamber1,
 	  ( LPTHREAD_START_ROUTINE ) HandleAction8Chamber1,
 	  ( LPTHREAD_START_ROUTINE ) HandleAction9Chamber1,
-	  ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
+	  ( LPTHREAD_START_ROUTINE ) HandleAction10Chamber1,
 	  ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
 	  ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
 	  ( LPTHREAD_START_ROUTINE ) HandleActionDummy,
@@ -141,6 +141,7 @@ LONG MeasInFastTrimmingCellChamber1( WORD wFUIdx,WORD wPartIdx,/*eIMTBasTypes*/i
  * description:         : This is the thread function to handle measured result values (normally measurement)              *
  *                        inside test sequence at trimming cell chamber 1.                                                 *
  *-------------------------------------------------------------------------------------------------------------------------*/
+#if !defined(_TEST)
 void MeasInTrimmingCellChamber1( void )
 {
 	int RetVal = 0;			//return value
@@ -222,7 +223,156 @@ void MeasInTrimmingCellChamber1( void )
 
 	ExitThread(0);
 }
+#else
+void MeasInTrimmingCellChamber1(void)
+{
+	int RetVal = 0;			//return value
+	TFLWRESULT tTFlwResult; //flow result
+	LONG lMainIndex, lSubIndex, lLocIdx; //split index
 
+	//endless loop (thread)
+	do
+	{
+		if (SETrimmChamber[CHAMBER1]->GetTrimmingCell()->IsSequenceStarted() == true)
+		{
+			//get result
+			SETrimmChamber[CHAMBER1]->GetTrimmingCell()->SetReadDataAdvov(true);
+			RetVal = MCxTFlowResult(LSTestHandle, 1, &tTFlwResult);
+
+			//check ok
+			if ( (RetVal == 0) && (tTFlwResult.ResultIdx != 0) )
+			{
+				//split index
+				RetVal = MeasSplittResIdx(LSTestHandle, &lMainIndex, &lSubIndex, &lLocIdx, tTFlwResult.ResultIdx);
+#if 0
+#if defined (_INDUTRON_PRINT_MORE)
+				printf("###MeasInTrimmingCellChamber1### lMainIndex=%d, lSubIndex=%d, lLocIdx=%d, Value=%f\n", lMainIndex, lSubIndex, lLocIdx, tTFlwResult.MeasRes[0]);
+#endif
+#endif
+				//check ok
+				if (RetVal == 0)
+				{
+
+					switch ( SETrimmChamber[CHAMBER1]->getProcessType() )
+					{
+					case ProcessType::IP450MeasUNernstControl:   //10: IP4 measurement under Nernst voltage control  
+					case ProcessType::IP450Meas2PointUp:		  //11:	IP4 measurement via 2-point UP measurement
+						//the lSubIndex of the cyclic measurements are <900 (900 .. 999)
+						if (lSubIndex < 900)
+						{							//repeat over all tiepoints (running variable i)
+							for (int i = 0; i < CELL_TIEPOINT_COUNT; i++)
+							{
+								//handle measured values
+								SETrimmChamber[CHAMBER1]->GetTrimmingCell()->HandleTestSequenceValues(0, i, lMainIndex, lSubIndex, tTFlwResult.MeasRes[i], tTFlwResult.TestTime * 1000, 0);
+							}
+						}
+						break;
+					default:
+						//?RH: Warum diese Unterscheidung 
+						if ((lMainIndex != IMT_RiAC && lMainIndex != IMT_IPu && lMainIndex != IMT_RHh && lMainIndex != IMT_PH) || lSubIndex == 1 || lSubIndex == 2 || lSubIndex == 3)
+						{
+							//repeat over all tiepoints (running variable i)
+							for (int i = 0; i < CELL_TIEPOINT_COUNT; i++)
+							{
+								if ((lSubIndex != 1) &&
+									(lSubIndex != 2) &&
+									(lSubIndex != 3))
+								{
+									lSubIndex = 0;
+								}
+								//handle measured values
+								SETrimmChamber[CHAMBER1]->GetTrimmingCell()->HandleTestSequenceValues(0, i, lMainIndex, lSubIndex, tTFlwResult.MeasRes[i], tTFlwResult.TestTime * 1000, 0);
+							}
+						}
+						break;
+					}
+				}
+			}	
+
+			if (tTFlwResult.TFlowEnd != 0)
+			{
+				SETrimmChamber[CHAMBER1]->GetTrimmingCell()->SetSequenceFinished(true);
+				SETrimmChamber[CHAMBER1]->GetTrimmingCell()->SequenceStarted = false;
+			}
+			else
+			{
+				SETrimmChamber[CHAMBER1]->GetTrimmingCell()->SetSequenceFinished(false);
+			}
+
+			SETrimmChamber[CHAMBER1]->GetTrimmingCell()->SetReadDataAdvov(false);
+			//Sleep(100);
+		}
+
+		if (SETrimmChamber[CHAMBER1]->GetTrimmingCell()->GetEventIPu4Measurement() == true)
+		{
+			long lRet = MCxEvent(LSTestHandle, 1, 1);
+			printf("MCxEvent(LSTestHandle, 1, 1): %d\n", lRet);
+			if (lRet == 0)
+			{
+				SETrimmChamber[CHAMBER1]->GetTrimmingCell()->SetEventIPu4Measurement(false);
+			}
+		}
+
+		if (SETrimmChamber[CHAMBER1]->GetReferenceCell()->IsSequenceStarted() == true)
+		{
+			//get result
+			SETrimmChamber[CHAMBER1]->GetReferenceCell()->SetReadDataAdvov(true);
+			RetVal = MCxTFlowResult(LSTestHandle, 2, &tTFlwResult);
+		
+			//check ok
+			if ((RetVal == 0) && (tTFlwResult.ResultIdx != 0))
+			{
+
+				//split index
+				RetVal = MeasSplittResIdx(LSTestHandle, &lMainIndex, &lSubIndex, &lLocIdx, tTFlwResult.ResultIdx);
+
+				//check ok
+				if (RetVal == 0)
+				{
+					//repeat over all tiepoints (running variable i)
+					for (int i = 0; i < CELL_TIEPOINT_COUNT; i++)
+					{
+						//handle measured values
+						if (lSubIndex > 900)
+						{
+							//RH: cyclic measurement
+							lSubIndex = 0;
+						}
+						SETrimmChamber[CHAMBER1]->GetReferenceCell()->HandleTestSequenceValues(0, i, lMainIndex, lLocIdx, tTFlwResult.MeasRes[i], tTFlwResult.TestTime * 1000, 0);
+					}
+				}
+			}
+
+			if (tTFlwResult.TFlowEnd != 0)
+			{
+				SETrimmChamber[CHAMBER1]->GetReferenceCell()->SetSequenceFinished(true);
+				SETrimmChamber[CHAMBER1]->GetReferenceCell()->SequenceStarted = false;
+			}
+			else
+			{
+				SETrimmChamber[CHAMBER1]->GetReferenceCell()->SetSequenceFinished(false);
+			}
+			SETrimmChamber[CHAMBER1]->GetReferenceCell()->SetReadDataAdvov(false);	
+		}
+
+		if (SETrimmChamber[CHAMBER1]->GetReferenceCell()->GetEventIPu4Measurement() == true)
+		{
+			long lRet = MCxEvent(LSTestHandle, 2, 1);
+			printf(" MCxEvent(LSTestHandle, 2, 1): %d\n", lRet);
+
+			if (lRet == 0)
+			{
+				SETrimmChamber[CHAMBER1]->GetReferenceCell()->SetEventIPu4Measurement(false);
+			}
+		}
+
+		Sleep(100);
+
+	} while (SETrimmChamber[CHAMBER1]->GetTrimmingCell()->DeinstallThreadRequested() == false);
+
+	ExitThread(0);
+}
+#endif
 /*-------------------------------------------------------------------------------------------------------------------------*
  * function name        : LONG MeasInFastReferenceCellChamber1( ... )                                                      *
  *                                                                                                                         *
@@ -246,6 +396,7 @@ LONG MeasInFastReferenceCellChamber1( WORD wFUIdx,WORD wPartIdx,/*eIMTBasTypes*/
 	return 0;
 }
 
+#if !defined (_TEST)
 /*-------------------------------------------------------------------------------------------------------------------------*
  * function name        : void MeasInreferenceCellChamber1( void )                                                         *
  *                                                                                                                         *
@@ -314,7 +465,7 @@ void MeasInReferenceCellChamber1( void )
 
 	ExitThread(0);	
 }
-
+#endif
 /*-------------------------------------------------------------------------------------------------------------------------*
  * function name        : void HandleChamber1( void )                                                                      *
  *                                                                                                                         *
@@ -329,8 +480,7 @@ void HandleChamber1( void )
 	do
 	{
 		SETrimmChamber[CHAMBER1]->HandleProcess(); 
-		//Dll bringt manchmal MVAL Ueberlauf
-		Sleep(100+200);
+		Sleep(200);
 	}while( SETrimmChamber[CHAMBER1]->DeinstallThreadRequested() == false );	
 
 	ExitThread(0);
@@ -465,9 +615,9 @@ LONG MeasInFastReferenceCellChamber2(WORD wFUIdx,WORD wPartIdx,/*eIMTBasTypes*/i
  *-------------------------------------------------------------------------------------------------------------------------*/
 void MeasInReferenceCellChamber2( void )
 {
-	int RetVal = 0;																													//return value
-	TFLWRESULT tTFlwResult; 																								//flow result
-	LONG lMainIndex, lSubIndex, lLocIdx;																		//split index
+	int RetVal = 0;		//return value
+	TFLWRESULT tTFlwResult; 	//flow result
+	LONG lMainIndex, lSubIndex, lLocIdx;	//split index
 	
 	//endless loop (thread)
 	do
@@ -667,15 +817,20 @@ void HandleAction2Chamber1( void )
 				( SETrimmChamber[CHAMBER1]->GetReferenceCell()->IsCardTemperatureOk() == true ) )
 		{
 			SETrimmChamber[CHAMBER1]->InstallThread( (LPTHREAD_START_ROUTINE) MeasInTrimmingCellChamber1, 
+#if !defined (_Test) && 0
 																		(LPTHREAD_START_ROUTINE) MeasInReferenceCellChamber1, 
+#else
+																		NULL,
+#endif
 																		(LPTHREAD_START_ROUTINE) HandleChamber1, 
 																		MeasInFastTrimmingCellChamber1, MeasInFastReferenceCellChamber1 );
 #if defined _INDUTRON_PRINT_MORE
 			//RH:
 			//SETrimmChamber[CHAMBER1]->StartProcess( MeasureTrimmingSelection );
-			printf("## ProcessType: %d\n", (ProcessType)ComPlc[CHAMBER1]->GetAssemblyData().AssemblyDataCommon.ProcessType);
+			//printf("## ProcessType: %d\n", (ProcessType)ComPlc[CHAMBER1]->GetAssemblyData().AssemblyDataCommon.ProcessType);
+			printf("## ProcessType: %d\n", ComPlc[CHAMBER1]->GetParamDataTrimming().ParamTrimmCell.ParamMainTrimmingCell.ProcessType);
 #endif
-			SETrimmChamber[CHAMBER1]->StartProcess( (ProcessType)ComPlc[CHAMBER1]->GetAssemblyData().AssemblyDataCommon.ProcessType );
+			SETrimmChamber[CHAMBER1]->StartProcess( (ProcessType)ComPlc[CHAMBER1]->GetParamDataTrimming().ParamTrimmCell.ParamMainTrimmingCell.ProcessType);
 
 			ComPlc[CHAMBER1]->WriteActionStartedFlag( 2, true );
 			do
@@ -817,20 +972,26 @@ void HandleAction7Chamber1( void )
 	{
 		ComPlc[CHAMBER1]->WriteActionStartedFlag( 7, true );
 		SETrimmChamber[CHAMBER1]->InstallThread( (LPTHREAD_START_ROUTINE) MeasInTrimmingCellChamber1, 
+#if !defined (_TEST)			
 																			(LPTHREAD_START_ROUTINE) MeasInReferenceCellChamber1, 
+#else
+																			NULL,
+#endif
 																			NULL, 
 																			MeasInFastTrimmingCellChamber1, 
 																			MeasInFastReferenceCellChamber1 );
 #if defined _INDUTRON_PRINT_MORE
 		//RH:
 		//SETrimmChamber[CHAMBER1]->StartProcess( MeasureTrimmingSelection );
-		printf("## ProcessType: %d\n", (ProcessType)ComPlc[CHAMBER1]->GetAssemblyData().AssemblyDataCommon.ProcessType);
+	//	printf("## ProcessType: %d\n", (ProcessType)ComPlc[CHAMBER1]->GetAssemblyData().AssemblyDataCommon.ProcessType);
+		printf("## ProcessType: %d\n", ComPlc[CHAMBER1]->GetParamDataTrimming().ParamTrimmCell.ParamMainTrimmingCell.ProcessType);
 #endif
-		SETrimmChamber[CHAMBER1]->StartProcess( (ProcessType)ComPlc[CHAMBER1]->GetAssemblyData().AssemblyDataCommon.ProcessType );
+		//SETrimmChamber[CHAMBER1]->StartProcess( (ProcessType)ComPlc[CHAMBER1]->GetAssemblyData().AssemblyDataCommon.ProcessType );
+		SETrimmChamber[CHAMBER1]->StartProcess( (ProcessType)ComPlc[CHAMBER1]->GetParamDataTrimming().ParamTrimmCell.ParamMainTrimmingCell.ProcessType );
 		do
 		{
-			ActTimeout++;																												//increment act timeout
-			Sleep( 100 );																											  //wait 100ms
+			ActTimeout++;	//increment act timeout
+			Sleep( 100 );  //wait 100ms
 		}
 		while( ( ActTimeout <= 600 ) && ( ComPlc[CHAMBER1]->GetAbortFlag( 7 ) == false ) );
 		SETrimmChamber[CHAMBER1]->StopProcess( );
@@ -948,11 +1109,16 @@ void HandleAction9Chamber1( void )
  *																																																												 *
  * output:              : void                                                                                             *
  *                                                                                                                         *
- * description:         : This is the thread function for handle the action 10 ( ).                                        *
+ * description:         : This is the thread function for handle the action 10 ( ).										   *
+ *						  Perform ADVOV calibration
  *-------------------------------------------------------------------------------------------------------------------------*/
 void HandleAction10Chamber1( void )
 {
-	ComPlc[CHAMBER1]->WriteActionStartedFlag( 10, true );
+	int RetVal = 0;
+
+	ComPlc[CHAMBER1]->WriteActionStartedFlag(10, true);
+
+	RetVal = SETrimmChamber[CHAMBER1]->PerformCalib();
 
 	ComPlc[CHAMBER1]->WriteActionFinishedFlag( 10, true );
 }
@@ -1467,9 +1633,7 @@ int ResultReadChamber1( unsigned int SubId, unsigned int Tiepoint )
 			//ilm normal result
 			RetVal = SETrimmChamber[CHAMBER1]->ReadResult( ComPlc[CHAMBER1]->GetResultDataIlmNormalAddress(), Tiepoint );
 			break;
-		case 99:
-			 MCxCalib(LSTestHandle, (LONG)pow(2.0f, 1 - 1));
-			 break;
+
 		default:
 			;
 			break;
@@ -1494,15 +1658,17 @@ void ActionFlagChangedChamber1( void )
 
 	for( int i = 0; i < ACTION_COUNT; i++ )
 	{
-		//-- action1: master reset
-		//-- action2: start trimming
-		//-- action3: scanner move abs
-		//-- action4: scanner trimming cut
-		//-- action5: scanner laser point 
-		//-- action6: scanner write text
-		//-- action7: heating and measure
-		//-- action8: measure normal
-		//-- action9: check and update firmware
+		//-- action1:  master reset
+		//-- action2:  start trimming
+		//-- action3:  scanner move abs
+		//-- action4:  scanner trimming cut
+		//-- action5:  scanner laser point 
+		//-- action6:  scanner write text
+		//-- action7:  heating and measure
+		//-- action8:  measure normal
+		//-- action9:  check and update firmware
+		//-- action10: perform MCxCalib pulse
+		
 		//detect rising edge
 		if( ComPlc[CHAMBER1]->GetRisingEdge( i + 1 ) == true )
 		{
@@ -1965,19 +2131,19 @@ int _tmain(int argc, _TCHAR* argv[])
 													&dwThreadId );
 	}	
 	
-	ComPlc[CHAMBER1] = new SEComPlc(1);																			//create plc communication for chamber 1
-	ComMicroLas[CHAMBER1] = new SEComMicroLas(1);														//create microlas communication for chamber 1
+	ComPlc[CHAMBER1] = new SEComPlc(1);	 //create plc communication for chamber 1
+	ComMicroLas[CHAMBER1] = new SEComMicroLas(1);	//create microlas communication for chamber 1
 	SETrimmChamber[CHAMBER1] = new SETrimmingChamber(1, ComMicroLas[CHAMBER1], ComPlc[CHAMBER1]);		//create chamber 1
 	ComPlc[CHAMBER1]->InstallOverTakenCallback( &ParameterOverTakenChamber1 ); //install parameter overtaken function
-	ComPlc[CHAMBER1]->InstallResultReadCallback( &ResultReadChamber1 );			//install result read callback function
+	ComPlc[CHAMBER1]->InstallResultReadCallback( &ResultReadChamber1 );	//install result read callback function
 	ComPlc[CHAMBER1]->InstallActionFlagChangedCallback( &ActionFlagChangedChamber1 ); //install action flag change callback function 
 	ComPlc[CHAMBER1]->InstallCyclicalReceivedCallback( &CyclicalDataWriteReadChamber1 ); //install cyclical callback function
 
-	ComPlc[CHAMBER2] = new SEComPlc(2);																			//create plc communication for chamber 2
-	ComMicroLas[CHAMBER2] = new SEComMicroLas(2);														//create microlas communication for chamber 2
+	ComPlc[CHAMBER2] = new SEComPlc(2);	//create plc communication for chamber 2
+	ComMicroLas[CHAMBER2] = new SEComMicroLas(2);	//create microlas communication for chamber 2
 	SETrimmChamber[CHAMBER2] = new SETrimmingChamber(2, ComMicroLas[CHAMBER2], ComPlc[CHAMBER2]);		//create chamber 2
 	ComPlc[CHAMBER2]->InstallOverTakenCallback( &ParameterOverTakenChamber2 ); //install parameter overtaken function
-	ComPlc[CHAMBER2]->InstallResultReadCallback( &ResultReadChamber2 );				//install result read callback function
+	ComPlc[CHAMBER2]->InstallResultReadCallback( &ResultReadChamber2 );	//install result read callback function
 	ComPlc[CHAMBER2]->InstallActionFlagChangedCallback( &ActionFlagChangedChamber2 ); //install action flag change callback function 
 	ComPlc[CHAMBER2]->InstallCyclicalReceivedCallback( &CyclicalDataWriteReadChamber2 ); //install cyclical callback function																																
 	

@@ -1,9 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Library %28import%29">
-      <UniqueIdentifier>{617fc323-6f3b-4cf0-aa7c-5b87e0a91164}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source">
       <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
       <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
@@ -11,6 +8,9 @@
     <Filter Include="Header">
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Library %28import%29">
+      <UniqueIdentifier>{22db9bf8-f01b-49e5-9533-5e4618a8dede}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -38,6 +38,18 @@
     <ClInclude Include="resource.h">
       <Filter>Header</Filter>
     </ClInclude>
+    <ClInclude Include="Source\ProcessTypes.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\NormalNumber.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="Library\IMT_BasTypeDef.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Program Files\Microsoft Visual Studio\2022\Professional\VC\Tools\MSVC\14.31.31103\include\setjmpex.h">
+      <Filter>Header</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\SELaserTrimming.cpp">
@@ -60,20 +72,20 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <Library Include="Library\LSTest.lib">
-      <Filter>Library %28import%29</Filter>
-    </Library>
-    <Library Include="Library\OpConServicesCommon.lib">
-      <Filter>Library %28import%29</Filter>
-    </Library>
+    <ResourceCompile Include="SELaserTrimming.rc" />
+  </ItemGroup>
+  <ItemGroup>
     <Library Include="Library\WS2_32.Lib">
+      <Filter>Library %28import%29</Filter>
+    </Library>
+    <Library Include="Library\LSTest.lib">
       <Filter>Library %28import%29</Filter>
     </Library>
     <Library Include="Library\IPHlpApi.Lib">
       <Filter>Library %28import%29</Filter>
     </Library>
-  </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="SELaserTrimming.rc" />
+    <Library Include="Library\OpConServicesCommon.lib">
+      <Filter>Library %28import%29</Filter>
+    </Library>
   </ItemGroup>
 </Project>

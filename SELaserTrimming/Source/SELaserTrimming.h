@@ -50,7 +50,7 @@
 		#define SW_VERSION "SIMU"
 	#else
 		#ifdef _DEBUG
-		 #define SW_VERSION "x.xxDBG"
+		 #define SW_VERSION "2023.0509"
 		#else
 		 #define SW_VERSION "x.xx"
 		#endif
@@ -60,9 +60,6 @@
 
 //-- Global enum --------------------------------------------------------------------------------------------
 
-
-
-
 //-- Global structures --------------------------------------------------------------------------------------
 
 
@@ -70,10 +67,13 @@
 	//chamber 1
 	//fast measurement trimming cell chamber 1
 	LONG MeasInFastTrimmingCellChamber1( WORD wFUIdx,WORD wPartIdx,int eMainType,float rMVal,DWORD tsMTime,LONG lResIdx );
-	void MeasInTrimmingCellChamber1( void );																//normal measurement trimming cell chamber 1
+	//normal measurement trimming cell chamber 1
+	void MeasInTrimmingCellChamber1( void );
 	//fast measurement reference cell chamber 1
 	LONG MeasInFastReferenceCellChamber1( WORD wFUIdx,WORD wPartIdx,int eMainType,float rMVal,DWORD tsMTime,LONG lResIdx );
+#if !defined (_TEST) && 0
 	void MeasInReferenceCellChamber1( void );																//normal measurement reference cell chamber 1
+#endif
 	void HandleChamber1( void );																						//chamber 1 handling
 
 	//chamber 2
@@ -90,41 +90,42 @@
 	void HandleSocketClientMicroLasChamber1( void );											  //socket client microlas communication
 
 	//handle actions
-	void HandleAction1Chamber1( void );																			//action 1 handling
-	void HandleAction2Chamber1( void );																			//action 2 handling
-	void HandleAction3Chamber1( void );																			//action 3 handling
-	void HandleAction4Chamber1( void );																			//action 4 handling
-	void HandleAction5Chamber1( void );																			//action 5 handling
-	void HandleAction6Chamber1( void );	 																		//action 6 handling
-	void HandleAction7Chamber1( void );	 																		//action 7 handling
-	void HandleAction8Chamber1( void );	 																		//action 8 handling
-	void HandleAction9Chamber1( void );	 																		//action 9 handling
+	void HandleAction1Chamber1( void );	// action 1 handling
+	void HandleAction2Chamber1( void );	// action 2 handling
+	void HandleAction3Chamber1( void );	// action 3 handling
+	void HandleAction4Chamber1( void );	// action 4 handling
+	void HandleAction5Chamber1( void );	// action 5 handling
+	void HandleAction6Chamber1( void );	// action 6 handling
+	void HandleAction7Chamber1( void );	// action 7 handling
+	void HandleAction8Chamber1( void );	// action 8 handling
+	void HandleAction9Chamber1( void );	// action 9 handling
+	void HandleAction10Chamber1( void );// action 10 handling
 
-	void HandleAction1Chamber2( void );																			//action 1 handling
-	void HandleAction2Chamber2( void );																			//action 2 handling
-	void HandleAction3Chamber2( void );																			//action 3 handling
-	void HandleAction4Chamber2( void );																			//action 4 handling
-	void HandleAction5Chamber2( void );																			//action 5 handling
-	void HandleAction6Chamber2( void );	 																		//action 6 handling
-	void HandleAction7Chamber2( void );	 																		//action 7 handling
-	void HandleAction8Chamber2( void );	 																		//action 8 handling
-	void HandleAction9Chamber2( void );	 																		//action 9 handling
+	void HandleAction1Chamber2( void );	//action 1 handling
+	void HandleAction2Chamber2( void );	//action 2 handling
+	void HandleAction3Chamber2( void );	//action 3 handling
+	void HandleAction4Chamber2( void );	//action 4 handling
+	void HandleAction5Chamber2( void );	//action 5 handling
+	void HandleAction6Chamber2( void );	//action 6 handling
+	void HandleAction7Chamber2( void );	//action 7 handling
+	void HandleAction8Chamber2( void );	//action 8 handling
+	void HandleAction9Chamber2( void );	//action 9 handling
 
-	void HandleActionDummy( void );	 																				//action dummy handling
+	void HandleActionDummy( void );	 //action dummy handling
 
 	//callback functions
-	int ParameterOverTakenChamber1( unsigned int SubId );										//parameter overtaken callback
-	void CyclicalDataWriteReadChamber1( void );														  //cyclical data callback
-	int ResultReadChamber1( unsigned int SubId, unsigned int Tiepoint );		//result read callback
-	void ActionFlagChangedChamber1( void );																	//action flag changed callback
+	int ParameterOverTakenChamber1( unsigned int SubId );	//parameter overtaken callback
+	void CyclicalDataWriteReadChamber1( void );	 //cyclical data callback
+	int ResultReadChamber1(unsigned int SubId, unsigned int Tiepoint );		//result read callback
+	void ActionFlagChangedChamber1( void );	//action flag changed callback
 
-	int ParameterOverTakenChamber2( unsigned int SubId );										//parameter overtaken callback
-	void CyclicalDataWriteReadChamber2( void );														  //cyclical data callback
-	int ResultReadChamber2( unsigned int SubId, unsigned int Tiepoint );		//result read callback
-	void ActionFlagChangedChamber2( void );																	//action flag changed callback
+	int ParameterOverTakenChamber2( unsigned int SubId );	//parameter overtaken callback
+	void CyclicalDataWriteReadChamber2( void );	 //cyclical data callback
+	int ResultReadChamber2(unsigned int SubId, unsigned int Tiepoint );		//result read callback
+	void ActionFlagChangedChamber2( void );		//action flag changed callback
 
-	void CheckStatisticDelete( void );                                      //check delete of statistics
-	void HandleCheckStatisticDelete( void );                                //handling check and delete statistic
+	void CheckStatisticDelete( void );   //check delete of statistics
+	void HandleCheckStatisticDelete( void );  //handling check and delete statistic
 
 	//main
 	int _tmain(int argc, _TCHAR* argv[]);																		//main function

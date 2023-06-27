@@ -199,7 +199,7 @@ struct ParamStationDataGeometry
 struct ParamStationDataProcess 
 {	
   float IpOffsetGasoline;	//ip offset gasoline [µA] (formally: IP_offset)
-	float IpOffsetDiesel;	//ip offset diesel [µA] (formally: IP_offset)
+  float IpOffsetDiesel;	//ip offset diesel [µA] (formally: IP_offset)
 };
 
 //laser data
@@ -250,26 +250,34 @@ struct ParamDataMainReferenceCell
   float HeatingTime;			//heating time (formally: HeatTime)
   unsigned int TestGasOverRef;	//test gas over reference sense (formally: _Ref_pruefen)
   float AllowableIpVariation;	//allowable ip variation reference sense (formally: d_IP_Ref)
-  float IpRef;					//ip ref (formally: IPref)   
+  float IpRef;		 //ip ref (formally: IPref)   
   unsigned int EnableNernstRegulation;	//enable nernst regulation (formally: NernstRegulation)
-  float NernstVoltage;					//nernst voltage (formally: U_Nernst)   
+  float NernstVoltage;	//nernst voltage (formally: U_Nernst)   
   float NernstRegulationStartDelay;		//nernst regulation start delay 
   float PumpVoltage;				//pump voltage (formally: U_Pump)
   float NegativePumpPulsVoltage;	//pump voltage pulse (not used)
   float NegativePumpPulsDelay;		//pump voltage pulse delay (not used)
   float NegativePumpPulsDuration;	//pump voltage pulse duration (not used)
+  float KValue; //K-Value for referene probe [mbar]
 };
 
 //parameter data reference cell
 struct ParamDataReferenceCell
 {
-  ParamDataMainReferenceCell ParamMainReferenceCell;											//main parameter reference cell	
+  ParamDataMainReferenceCell ParamMainReferenceCell; //main parameter reference cell	
 };
 
 //parameter data trimming cell
 struct ParamDataMainTrimmingCell
 {
-  float IpRef;						//ip ref [µA] (formally: Ip_Ref)
+  int ProcessType;				//ProcessType (10: Nernst voltage control, 11: 2-point measurement)
+  float IpRef;					//ip ref [µA] (formally: Ip_Ref)
+  float fIpRefRngMin;
+  float fIpRefRngMax;
+  float fSeRHkMin;
+  float fRHkVMax;
+  float fRHkMin;
+  float fRHkMax;
   float HeatingRiTrimming;		    //Ri at trimming [Ω] (formally: Ri)
   float HeatingRiSelection;			//Ri at diesel selection [Ω]
   float HeatingRiOffset;			//ri offset because of line rersistance sensor [Ω]
@@ -278,6 +286,8 @@ struct ParamDataMainTrimmingCell
   float HeatingTime;				//heating duration [s] (formally: Heiz_Time)
   float HeaterRampDuration;			//heating ramp duration [s] (formally: HeaterRampDuration)
   float NernstVoltage;				//nernst voltage [V] (formally: U_Nernst)
+  float fMinNernstVoltage;			//nernst voltage [V] min 
+  float fMaxNernstVoltage;			//nernst voltage [V] max
   float PauseTime;					//pause time [s] (formally: Pausenzeit_H_L)
   float StartDelay;					//start delay [s] (formally: Startverzoegerung)
   float PumpVoltage;				//pump voltage  [V] (formally: U_Pump)
@@ -288,6 +298,18 @@ struct ParamDataMainTrimmingCell
   float DeltaTihMeas;				//duration di/dt und dr/dt [ms] (formally: deltaTIHMeas)
   float PhDisturbedRi;				//heater power at disturbed ri reglation [W] (formally: fPHwhenRiRegFailed)
   float TimeoutDisturbedRi;			//time to recognize disturbed ri-regulation [s] (formally: fTimeoutForRiRegFailed)
+  float IntegrationTime;			//integartion time 
+  //type data for 2-point measurement
+  float fTimeStartUp1;				//APE pump voltage start time point of measurement 1
+  float fUp1Target;
+  float fUp1Min;
+  float fUp1Max;
+  float fIntTimeMeasPoint1;
+  float fUp2Target;
+  float fUp2Min;
+  float fUp2Max;
+  float fWaitingTimeIp2Un2Meas;
+  float fIntTimeMeasPoint2;
 };
 
 //parameter data stability
@@ -308,29 +330,29 @@ struct ParamDataIpMeasurement
   float PSetpoint;		 //pressure setpoint [mbar] (formally: P_Soll)"     
   float	PMaxAllowedDiff; //max allowed pressure difference [mbar]
   float FlowSetpoint;	 //chamber flow setpoint [ccm/min]
-  float FlowMaxAllowedDiff;           //chamber flow max allowed difference [ccm/min]
+  float FlowMaxAllowedDiff; //chamber flow max allowed difference [ccm/min]
   float EvacuatedPressureAllowedMax;  //max allowed evacuated pressure [mbar]
-  float LeackageRateAllowedMax;       //max allowed leackage rate [mbar/s]
-  int IpCorrectionMode;		//ip correction mode (formally: _Refsens)"       
-  float IpStable;			//ip stable limit [%] (formally: IP_Stabil)"       
-  float IpStableTime1;		//ip stable time 1 (multiple 1,0s) [s] (formally: Zeit1_IP_stabil)"       
-  float IpStableTime2;		//ip stable time 2 (multiple 1,0s) [s] (formally: Zeit2_IP_stabil)"     
-  float IpStableTime3;		//ip stable time 3 (multiple 1,0s) [s] (formally: Zeit3_IP_stabil)"      
-  float MinCutTime;			//min cut time [ms] (formally: Schnitte_Zeit)"
+  float LeackageRateAllowedMax; //max allowed leackage rate [mbar/s]
+  int IpCorrectionMode;	 //ip correction mode (formally: _Refsens)"       
+  float IpStable;		 //ip stable limit [%] (formally: IP_Stabil)"       
+  float IpStableTime1;	 //ip stable time 1 (multiple 1,0s) [s] (formally: Zeit1_IP_stabil)"       
+  float IpStableTime2;	 //ip stable time 2 (multiple 1,0s) [s] (formally: Zeit2_IP_stabil)"     
+  float IpStableTime3;	 //ip stable time 3 (multiple 1,0s) [s] (formally: Zeit3_IP_stabil)"      
+  float MinCutTime;		 //min cut time [ms] (formally: Schnitte_Zeit)"
   int StabilityMeasCount;	//number of stability measurements after trimming [1] (formally: _Anz_Stab_Mess)"        
   float StabilityWaitTime;	//stability wait time between measurements [ms] (formally: Warte_Zeit)"       
   unsigned int EvaluateRhh;	//evaluation rhh [1] (formally: EvaluateRHh)       
-  float RhhLowerLimit;		//rhh lower limit [Ω] (formally: RHh_lowerLimit)       
-  float RhhUpperLimit;		//rhh upper limit [Ω] (formally: RHh_upperLimit)       
+  float RhhLowerLimit;	//rhh lower limit [Ω] (formally: RHh_lowerLimit)       
+  float RhhUpperLimit;	//rhh upper limit [Ω] (formally: RHh_upperLimit)       
   unsigned int EvaluatePh;	//evaluation ph [1] (formally: EvaluatePH)      
-  float PhLowerLimit;		//power lower limit [W] (formally: PH_lowerLimit)       
-  float PhUpperLimit; 		//power upper limit [0;50] [W] (formally: PH_upperLimit)       
-  unsigned int EnableNernstRegulation;		//enable nernst regulation (0=off, 1=on) (formally: NernstRegulation)        
+  float PhLowerLimit;   //power lower limit [W] (formally: PH_lowerLimit)       
+  float PhUpperLimit; 	//power upper limit [0;50] [W] (formally: PH_upperLimit)       
+  unsigned int EnableNernstRegulation;	//enable nernst regulation (0=off, 1=on) (formally: NernstRegulation)        
   float NernstRegulationStartDelay;			//start delay nernst regulation [s] (formally: NernstRegulationStartDelay)      
-  int IpCorrectionSource;			//ip correction source (0=none, 1=ref1, 2=ref2, 3=ref1+ref2) (formally: IPCorrectionSource)       
-  float StartIpLowerLimit;			//start ip lower limit [µA] (formally: StartIP_lowerLimit)      
-  float StartIpUpperLimit;			//start ip upper limit [µA] (formally: StartIP_upperLimit)             
-  float MaxPassageLastRawTrim;		//max passage last raw trimming cut [1] (formally: fStatisticsIndicator)
+  int IpCorrectionSource;	//ip correction source (0=none, 1=ref1, 2=ref2, 3=ref1+ref2) (formally: IPCorrectionSource)       
+  float StartIpLowerLimit;	//start ip lower limit [µA] (formally: StartIP_lowerLimit)      
+  float StartIpUpperLimit;	//start ip upper limit [µA] (formally: StartIP_upperLimit)             
+  float MaxPassageLastRawTrim;	//max passage last raw trimming cut [1] (formally: fStatisticsIndicator)
 
 };
 
@@ -341,6 +363,10 @@ struct ParamDataRiRegulaton
   float RiRegKp;	//pid-regulator kp-value [1]
   float RiRegKi;	//pid-regulator ki-value [1]
   float RiRegKd;	//pid-regulator kd-value [1]
+  float Freq;		//frequency [Hz]
+  float Amplitude;	//amplitude [µA]
+  float Delay;		//delay [ms]
+  float Ta;
 };
 
 //parameter data trimming cell
@@ -410,8 +436,8 @@ struct ParamDataLaser
   float WobbleFrequency;		//wobble frequency [Hz] 
   float WobbleTransversal;		//wobble transversal [mm]
   float WobbleLongitudinal;		//wobble longitudinal	[mm]
-	float LaserPower[ CELL_TIEPOINT_COUNT ];	//laser power [W]
-	float LaserPowerHeightening;     //laser power heightening [%]
+  float LaserPower[ CELL_TIEPOINT_COUNT ];	//laser power [W]
+  float LaserPowerHeightening;     //laser power heightening [%]
 };
 
 //diesel qualification
@@ -440,6 +466,7 @@ struct ParamDataTrimmingChamber
   ParamDataTrimmingCell ParamTrimmCell;	//trimming cell
   ParamDataTrimmingProcess ParamTrimmProcess;	 //process data
 };
+
 
 //check type
 struct CheckType
@@ -502,8 +529,8 @@ struct ParamDataIpNormal
 {
   float HeaterVoltageSetpoint;		//heater voltage setpoint [V]
   float IpPumpVoltageSetpoint;		//pump voltage setpoint
-  CheckType ChkUp;//check up
-  CheckType ChkIp;//check ip
+  CheckType ChkUp; //check up
+  CheckType ChkIp; //check ip
 };
 
 //parameter ilm normal
@@ -538,33 +565,33 @@ struct ParamDataNormalMeasure
 //assembly data common 
 struct AssemblyDataTrimmingCommon
 {
-  unsigned int TypeNo;																										//type number
-	unsigned int TypeNoGs;																									//type number
-	unsigned int TypeNoDs;																									//type number
-  unsigned int Charge;																										//charge number
-  unsigned int PartCharge;																								//part charge number
-  int ProcessType;																												//process type (1=selection gs/ds, 2=trimming gs, 3=trimming gs/ds)
-  unsigned int WpcNo;																											//wpc number
-  unsigned int ChamberNumber;	 																					  //chamber number
-	unsigned int GlobalMachineNumber;	                                      //global machine number
-  float EvacuatedPressure;																								//evacuated pressure [mbar]
-  float AdjustPollutePercent;																							//adjustment pollution protection glass [%]	(0%=max pollution; 100%=no pollution; 200%=not plausible (plc zero line wrong))
-  float LaserPower;																								      	//laser power sensor [mW]
-  float LeakageRate;																											//leakage rate [mbar/s]
-  float AtmospherePressure;																								//atmosphere pressure [mbar]
+  unsigned int TypeNo;	//type number
+  unsigned int TypeNoGs;	//type number
+  unsigned int TypeNoDs;	//type number
+  unsigned int Charge;	//charge number
+  unsigned int PartCharge;	//part charge number
+  int ProcessType;		//process type (1=selection gs/ds, 2=trimming gs, 3=trimming gs/ds)
+  unsigned int WpcNo;	//wpc number
+  unsigned int ChamberNumber;	 //chamber number
+  unsigned int GlobalMachineNumber;	//global machine number
+  float EvacuatedPressure;	//evacuated pressure [mbar]
+  float AdjustPollutePercent;	//adjustment pollution protection glass [%]	(0%=max pollution; 100%=no pollution; 200%=not plausible (plc zero line wrong))
+  float LaserPower;		//laser power sensor [mW]
+  float LeakageRate;	//leakage rate [mbar/s]
+  float AtmospherePressure;	//atmosphere pressure [mbar]
 };
 
 //assembly data each tiepoint
 struct AssemblyDataTrimmingTiepoint
 {
-  int SEPartStatus;																												//part status
-  int SEPartNioReworkReason;																							//nio or rework reason
+  int SEPartStatus;	 //part status
+  int SEPartNioReworkReason; //nio or rework reason
 };
 
 //assembly data every chamber
 struct AssemblyDataTrimmingChamber
 {
-  AssemblyDataTrimmingCommon AssemblyDataCommon;													//common data
+  AssemblyDataTrimmingCommon AssemblyDataCommon;//common data
   AssemblyDataTrimmingTiepoint AssemblyDataTiepoint[CELL_TIEPOINT_COUNT];	//tiepoint specific data
 };
 
@@ -573,16 +600,16 @@ struct ResultDataTrimming
 {
   unsigned int SerialNumber;//serial number
   char SerialCode[7];		//serial code
-  float IpStart;		//start ip
+  float IpStart;	//start ip
   float IpEndCut;   //ip at end of last cut 
   float IpEndCheck;	//ip at end check
-  int CutCount;	//count of cuts
-  float AverageCrossingCount;	//avg crossing count
-  int CrossingCountLastRaw;		//crossing count at last raw trimming cut
+  int CutCount;	    //count of cuts
+  float AverageCrossingCount; //avg crossing count
+  int CrossingCountLastRaw;	  //crossing count at last raw trimming cut
   int SEPartStatus;		//part status
   int SEPartNioReworkReason; //nio or rework reason
-  float TrimmingCutPos[100];	//cut position every crossing
-  float TrimmingCutIp[100];		//ip every crossing
+  float TrimmingCutPos[100]; //cut position every crossing
+  float TrimmingCutIp[100];	 //ip every crossing
   float IpRef[2];  //ip value reference cell at beginning process
 };
 
@@ -611,8 +638,8 @@ struct ResultDataHeaterNormal
 struct ResultDataUniversalNormal
 {
   float Igrk;	//igrk [µA]
-  float Il;	//leak current [µA]
-  float RiDcn;		//RiDcn [Ω]
+  float Il;	    //leak current [µA]
+  float RiDcn;	//RiDcn [Ω]
   float IpRe;	//IpRe [µA]
   float RiAc;	//RiAc [Ω]
   float RiAcstat;	//RiAcStat [Ω]
@@ -629,9 +656,9 @@ struct ResultDataUnNormal
 //result data ip normal
 struct ResultDataIpNormal
 {
-  float UApe;	//UApe [V]
+  float UApe;  //UApe [V]
   float Ip;	   //pump current [µA]
-  int Status;	//status code (0=io,1=value1 nio,2=value2 nio,4=value3 nio,8=value4 nio,...)
+  int Status;  //status code (0=io,1=value1 nio,2=value2 nio,4=value3 nio,8=value4 nio,...)
 };
 
 //result data ilm normal
@@ -924,19 +951,19 @@ private:
   CyclicDataTrimming CyclicTrimming[CELL_TIEPOINT_COUNT];	//cyclical data
 
   //action flag data
-  bool ActionStart[32];																										//action start flag
-  bool ActionRisingEdge[32];																							//rising edge flag
-  bool ActionFallingEdge[32];																							//falling edge flag
-  bool ActionStarted[32];																									//action started flag
-  bool ActionFinished[32];																								//action finished flag
-  bool ActionAbort[32];																										//action abort flag
+  bool ActionStart[32];	  //action start flag
+  bool ActionRisingEdge[32];  //rising edge flag
+  bool ActionFallingEdge[32]; //falling edge flag
+  bool ActionStarted[32];	  //action started flag
+  bool ActionFinished[32];	  //action finished flag
+  bool ActionAbort[32];	//action abort flag
 
-  float ChamberPressureActual;																						//actual chamber pressure
-  float ChamberFlowActual;																								//actual chamber flow
-  float ChamberLaserPowerActual;																				  //actual chamber laser power
+  float ChamberPressureActual;	 //actual chamber pressure
+  float ChamberFlowActual;		 //actual chamber flow
+  float ChamberLaserPowerActual; //actual chamber laser power
 
-  unsigned int DigitalIn;																									//digital in 
-  unsigned int DigitalOut;																								//digital out
+  unsigned int DigitalIn;	//digital in 
+  unsigned int DigitalOut;	//digital out
 
 	float ActIpRef[2]; 
 
@@ -946,10 +973,10 @@ private:
   //-- memberfunctions
 public:
   //-- memberfunctions
-  SEComPlc();																										          //constructor
-  SEComPlc( int ChamberId );												                      //constructor (overloaded)
-  ~SEComPlc();																										        //destructor
-  int Initializing( void );		  																					//initialization
+  SEComPlc();	 //constructor
+  SEComPlc( int ChamberId );  //constructor (overloaded)
+  ~SEComPlc();		     //destructor
+  int Initializing( void );		//initialization
   ParamStationDataTrimmingChamber GetParamStationDataTrimming( void );		//get trimming parameter data
   ParamDataTrimmingChamber GetParamDataTrimming( void );		//get trimming parameter data
   ParamDataNormalMeasure GetParamDataNormalMeasure( void ); 	//get normal measure data
@@ -979,35 +1006,35 @@ public:
   int Connect( void );		//connect to plc
   int Disconnect( void );	//disconnect from plc
 
-  static HANDLE hThreadHandleComPlc[CHAMBER_COUNT];												//thread handle
+  static HANDLE hThreadHandleComPlc[CHAMBER_COUNT];	//thread handle
 
-  int RecvSend( void );																										//receive and send 
-  int InstallThread( LPTHREAD_START_ROUTINE CallbackAddress ) ;						//install thread
+  int RecvSend( void );		//receive and send 
+  int InstallThread( LPTHREAD_START_ROUTINE CallbackAddress ) ;		//install thread
 
-  void MasterReset();																											//master reset
+  void MasterReset();	//master reset
 
-  float GetActualPressure( void );																				//get actual chamber pressure
-  float GetActualFlow( void );																						//get actual chamber flow
-	float GetActualLaserPower( void );																			//get actual chamber laser power
+  float GetActualPressure( void );	//get actual chamber pressure
+  float GetActualFlow( void );			//get actual chamber flow
+	float GetActualLaserPower( void );		//get actual chamber laser power
 
-  unsigned int GetDigitalIn( void );																			//get digital in flags
-  void SetDigitalOut( unsigned int DigitalOut );													//set digital out flags
+  unsigned int GetDigitalIn( void );	//get digital in flags
+  void SetDigitalOut( unsigned int DigitalOut );	//set digital out flags
 
-  bool GetActionFlag( char Flag );																				//get action flag
-  bool GetRisingEdge( char Flag );																				//get rising edge
-  bool GetFallingEdge( char Flag );																				//get falling edge
-  bool GetAbortFlag( char Flag );																					//get abort flag
-  void WriteActionStartedFlag( char Flag, bool State );										//write action start flag
-  void WriteActionFinishedFlag( char Flag, bool State );									//write action finished flag
-  void WriteActionAbortFlag( char Flag, bool State );											//write action abort flag
-  void SetErrorCode( unsigned int Type, int ErrorCode );									//set error code
-  int ReadErrorCode( unsigned int Type );																	//read error code
-  void SetBootReady( void );																							//set boot ready
-  void SetReady( void );																					    		//set ready
+  bool GetActionFlag( char Flag );	//get action flag
+  bool GetRisingEdge( char Flag );		//get rising edge
+  bool GetFallingEdge( char Flag );	//get falling edge
+  bool GetAbortFlag( char Flag );	//get abort flag
+  void WriteActionStartedFlag( char Flag, bool State );	//write action start flag
+  void WriteActionFinishedFlag( char Flag, bool State );//write action finished flag
+  void WriteActionAbortFlag( char Flag, bool State );	//write action abort flag
+  void SetErrorCode( unsigned int Type, int ErrorCode );//set error code
+  int ReadErrorCode( unsigned int Type );	//read error code
+  void SetBootReady( void );	//set boot ready
+  void SetReady( void );//set ready
 
-  int (*ParameterOverTaken)( unsigned int Type );													//parameter overtaken function
-  int (*ResultRead)( unsigned int Type, unsigned int Tiepoint );					//read reasult function
-  void (*ActionFlagChanged)( void );																			//action flag changed
+  int (*ParameterOverTaken)( unsigned int Type );	//parameter overtaken function
+  int (*ResultRead)( unsigned int Type, unsigned int Tiepoint );		//read reasult function
+  void (*ActionFlagChanged)( void );												//action flag changed
   void (*CyclicalReceived)( void );			//cyclical data received
   
 
@@ -1078,6 +1105,7 @@ public:
   //---------------------------------------------------------------------------------------------------------
 
 // Analogous to Enum "TYPE MeasuringResultSubCmdEnum" in PLC software
+#if 1
 enum PLCMeasuringResultCmd
 {
 	UNDEFINED				= 0,
@@ -1089,7 +1117,7 @@ enum PLCMeasuringResultCmd
 	RESULT_IP_NORMAL		= 6,
 	RESULT_ILL_NORMAL		= 7,
 };
-
+#endif
   #undef EXTERN
 #endif
 

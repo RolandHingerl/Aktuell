@@ -80,6 +80,7 @@ static HANDLE LSTestHandle;														//handle for LSTestDll (must be a globa
 
 // indutron defines:
 #define _INDUTRON_PRINT_MORE  // additional test outputs
+#define _TEST
 
 //-- Global enum --------------------------------------------------------------------------------------------
 //cell types
@@ -126,11 +127,18 @@ struct HeaterControlParam
 struct TestSequenceParam
 {
 	HeaterControlParam Heater[2];	//heater control parameter
-	float PumpCurrentRE;			//pump current 
+	float PumpCurrentRE;			//Reference current 
+	float MinPumpCurrentRE;			//Min reference current
+	float MaxPumpCurrentRE;			//Max reference current
 	float PumpVoltADV;				//pump voltage
 	float RiSetPoint;				//ri setpoint
+	float RiUpperLimit;
+	float RiLowerLimit;
+	float DelayRiMonitoring;		//Start delay for Ri monitoring 
 	float UNRegDelay;				//un regulation delay
-	float NernstVoltADV;			//nernst voltage 
+	float NernstVoltADV;			//nernst voltage / Nernst voltage target for Nernst voltage regulation
+	float MinUNernst;
+	float MaxUNernst;
 	float FastContinue;				//fast continue
 	float LowPassConst;				//low pass const
 	float MeasureFLODelay;			//meas uh-reg to ri-reg delay
@@ -146,6 +154,19 @@ struct TestSequenceParam
 	float NegPulseTime;				//negative pulse time
 	float NegPulseDelay;			//negative pulse delay
 	float NegPulseVolt;				//negative pulse voltage
+	float Freq;
+	float Amplitude;
+	float Delay;
+	float Ta;
+	float AvgTime;
+	bool bEnableRhh;
+	bool bEnablePh;
+	float fTimeStartUp1;				//APE pump voltage start time point of measurement 1
+	float fUp1Target;
+	float fIntTimeMeasPoint1;
+	float fUp2Target;
+	float fWaitingTimeIp2Un2Meas;
+	float fIntTimeMeasPoint2;
 };
 
 
@@ -176,7 +197,7 @@ protected:
 	ParamDataNormalMeasure *ParamNormal;	//parameter for normal measure
 
 	
-	
+	bool bMeasureIPu4Event;
 	bool SequenceFinished;
 	ProcessType ProcessTypeLocal;
 	float AvgCardTemperature;
@@ -185,7 +206,9 @@ protected:
 	std::vector <SEValueInfo> RiValues[CELL_TIEPOINT_COUNT];	//vector of measured Ri values (ident=260)
 	SEValueInfo RiValues1[CELL_TIEPOINT_COUNT];	//measured Ri values (ident=260)
 	SEValueInfo RiValues2[CELL_TIEPOINT_COUNT];	//measured Ri values (ident=260)
-	
+	SEValueInfo RiPoint1[CELL_TIEPOINT_COUNT];	//measured Ri values (ident=260)
+	SEValueInfo RiPoint2[CELL_TIEPOINT_COUNT];	//measured Ri values (ident=260)
+
 	SEValueInfo RiMinValues[CELL_TIEPOINT_COUNT]; // measured RiMin values(ident = 285)
 	SEValueInfo RiMaxValues[CELL_TIEPOINT_COUNT]; // measured RiMax values(ident = 286)
 
@@ -194,15 +217,20 @@ protected:
 	SEValueInfo IpValues1[CELL_TIEPOINT_COUNT];	//measured Ip values (ident=259)
 	SEValueInfo IpValues2[CELL_TIEPOINT_COUNT];	//measured Ip values (ident=259)
 	SEValueInfo IpValues3[CELL_TIEPOINT_COUNT];	//measured Ip values (ident=259)
-	SEValueInfo Ip4Average[CELL_TIEPOINT_COUNT];//measured Ip values (ident=259, SubIndex=100)
+	SEValueInfo Ip450Average[CELL_TIEPOINT_COUNT];//measured Ip values (ident=259, SubIndex=100)
 
 	SEValueInfo IPuPoint1[CELL_TIEPOINT_COUNT];  //measured Ip values (ident=259, SubIndex=101)
 	SEValueInfo IPuPoint2[CELL_TIEPOINT_COUNT]; //measured Ip values (ident=259, SubIndex=102)
 
     std::vector <SEValueInfo> RhhValues[CELL_TIEPOINT_COUNT]; //vector of measured Rhh values (ident=108)
-	std::vector <SEValueInfo> PhValues[CELL_TIEPOINT_COUNT];  //vector of measured Ph  values (ident=110)
+	SEValueInfo RhhPoint1[CELL_TIEPOINT_COUNT];
+	SEValueInfo RhhPoint2[CELL_TIEPOINT_COUNT];
 
-	//acyclic values
+	std::vector <SEValueInfo> PhValues[CELL_TIEPOINT_COUNT];  //vector of measured Ph  values (ident=110)
+	SEValueInfo PhPoint1[CELL_TIEPOINT_COUNT];
+	SEValueInfo PhPoint2[CELL_TIEPOINT_COUNT];
+
+	//cyclic values
 	SEValueInfo UhValues[CELL_TIEPOINT_COUNT];	  //measured Uh values (ident=103) 
 	SEValueInfo UhMinValues[CELL_TIEPOINT_COUNT]; //measured Uh min values (ident=104) 
 	SEValueInfo UhMaxValues[CELL_TIEPOINT_COUNT]; //measured Uh max values (ident=105)
@@ -230,7 +258,8 @@ protected:
 	SEValueInfo UnValues3[CELL_TIEPOINT_COUNT];	//measured Un values (ident=251)
 
 	SEValueInfo IpReValues[CELL_TIEPOINT_COUNT];  //measured IpRe values (ident=256)
-	SEValueInfo IpRe20uA[CELL_TIEPOINT_COUNT];  //measured IpRe values (ident=256)
+	SEValueInfo IpReValue1[CELL_TIEPOINT_COUNT];  //measured IpRe values (ident=256)
+	SEValueInfo IpReValue2[CELL_TIEPOINT_COUNT];  //measured IpRe values (ident=256)
 
 	SEValueInfo UReValues[CELL_TIEPOINT_COUNT];	  //measured URe values (ident=250)
 	SEValueInfo UReValues2[CELL_TIEPOINT_COUNT];  //measured URe values (ident=250), for average measurement
@@ -292,7 +321,9 @@ public:
 	bool IsSequenceStarted( void );
 	bool IsReadDataAdvovActive( void );
 	void SetReadDataAdvov( bool Active ); 
-
+	bool GetEventIPu4Measurement( void );
+	void SetEventIPu4Measurement( bool bTrigger );
+	TestSequenceParam PrepParameter(void);
 };
 
 /*-------------------------------------------------------------------------------------------------------------------------*
@@ -307,8 +338,8 @@ private:
 
 	//-- private memberfunctions
 	int GenerateTestSequence( TestSequenceParam Parameter ); //generate test sequence
-	int GenerateTestSequence_Ip4UNernstControl( TestSequenceParam Parameter );
-	int GenerateTestSequence_Ip4TwoPointMeasUp( TestSequenceParam Parameter );
+	int GenerateTestSequence_IP450UNernstControl( TestSequenceParam Parameter );
+	int GenerateTestSequence_IP450TwoPointMeasUp( TestSequenceParam Parameter );
 	int GeneratePositionNormalContactSequence( void );	     //generate contact check sequence
 	int GeneratePositionNormalSequence( void );	    //generate position normal sequence
 	int GenerateHeaterNormalSequence( void );	    //generate heater normal sequence
@@ -335,6 +366,7 @@ public:
 	int Initializing( ParamStationDataTrimmingCell *ParamStationTrimmCell, ParamDataTrimmingCell *ParamTrimmCell, ParamDataNormalMeasure *ParamNormal ); //initialization
 	int CheckFirmware( void );
 	int GenerateAndTransmittSequence( ProcessType Type );									  //genaerate and transmitt sequence
+	int PerformCalib( void );
 };
 
 
@@ -350,8 +382,8 @@ private:
 
 	//-- private memberfunctions	
 	int GenerateTestSequence( TestSequenceParam Parameter );	//generate test sequenc for laser trimming
-	int GenerateTestSequence_Ip4UNernstControl( TestSequenceParam Parameter );  // generate test sequenc for IP4 selection with Nernst voltage control
-	int GenerateTestSequence_Ip4TwoPointMeasUp( TestSequenceParam Parameter );     // generate test sequenc for IP4 selection with 2-point measurement of the Nerst voltage
+	int GenerateTestSequence_IP450UNernstControl( TestSequenceParam Parameter );  // generate test sequenc for IP4 selection with Nernst voltage control
+	int GenerateTestSequence_IP450TwoPointMeasUp( TestSequenceParam Parameter );     // generate test sequenc for IP4 selection with 2-point measurement of the Nerst voltage
 
 public:
 	//-- public members

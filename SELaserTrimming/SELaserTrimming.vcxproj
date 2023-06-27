@@ -18,6 +18,7 @@
     <ProjectGuid>{EBCAF11C-FFD3-4A88-9543-6E6FAD0B8549}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>SELaserTrimming</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -61,6 +62,7 @@
     <LinkIncremental>true</LinkIncremental>
     <OutDir>.\Debug\$(Configuration)\</OutDir>
     <IntDir>.\Debug\$(Configuration)\</IntDir>
+    <ManagedAssembly>true</ManagedAssembly>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
@@ -125,6 +127,8 @@ copy  $(OutDir)*.exe              ..\Control\InstallStation\ContentStation\SELas
       <AssemblerListingLocation>$(OutDir)/</AssemblerListingLocation>
       <ObjectFileName>$(OutDir)/</ObjectFileName>
       <ProgramDataBaseFileName>$(OutDir)/</ProgramDataBaseFileName>
+      <CompileAsManaged>true</CompileAsManaged>
+      <LanguageStandard>Default</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -190,7 +194,11 @@ xcopy /y $(OutDir)SELasertrimming.exe M:\</Command>
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="C:\Program Files\Microsoft Visual Studio\2022\Professional\VC\Tools\MSVC\14.31.31103\include\setjmpex.h" />
+    <ClInclude Include="Library\IMT_BasTypeDef.h" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="Source\NormalNumber.h" />
+    <ClInclude Include="Source\ProcessTypes.h" />
     <ClInclude Include="Source\SEComMicroLas.h" />
     <ClInclude Include="Source\SEComPlc.h" />
     <ClInclude Include="Source\SEHelpFunctions.h" />
@@ -208,13 +216,13 @@ xcopy /y $(OutDir)SELasertrimming.exe M:\</Command>
     <ClCompile Include="Source\SETrimmingChamber.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ResourceCompile Include="SELaserTrimming.rc" />
+  </ItemGroup>
+  <ItemGroup>
     <Library Include="Library\IPHlpApi.Lib" />
     <Library Include="Library\LSTest.lib" />
     <Library Include="Library\OpConServicesCommon.lib" />
     <Library Include="Library\WS2_32.Lib" />
-  </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="SELaserTrimming.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

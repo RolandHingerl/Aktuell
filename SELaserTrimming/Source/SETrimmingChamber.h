@@ -107,9 +107,12 @@ enum PartStatus
 	DeactivatedCondition = 9 // deactivated condition
 };
 
+#if 0
 //nio or rework reason
 enum NioReworkReason
 {
+	RHcOutsideLimit = 19,			// Heater cold measurement out of Tolerance
+	RiOutsideLimit = 18,			// 
 	UHeaterOutsideLimit = 17,		// Heater voltage out of tolerance (z.B. UHmax > 12V)
 	UNernstOutsideLimit = 16,		// Nernst voltage target during IP4 measurement out of tolerance
 	UApeOutsideLimit = 15,			// APE voltage during UNernst control out of tolerance
@@ -140,8 +143,46 @@ enum NioReworkReason
 	MinCrossingCount = -10,			// min crossing count violated (se)
 	ReworkOnceAgainRework = -11,    // rework once again rework state (se)
 	MinCutCountBelow = -12 ,         // min cut count below (se)
-
 };
+#else
+// nio or rework reason
+// Stefan Götz 03.06.2023 Sortiert
+enum NioReworkReason
+{
+	NoReason = 0,				// no reason - empty message (all,mae se,se)
+	IpOutsideLimit = 1,			// ip ouside (se)
+	NoStability = 2,			// no stability (se)
+	ContactRiStabilityNok = 3,	// contact and ri stability nio (se)
+	RhkOutsideLimit = 4,		// Heater cold resistance out of tolerance
+	RiOutsideLimit = 5,			// Internal resistance AC out of tolerance
+	UHeaterOutsideLimit = 6,	// Heater voltage out of tolerance (z.B. UHmax > 12V)
+	UNernstOutsideLimit = 7,	// Nernst voltage target during IP4 measurement out of tolerance
+	UApeOutsideLimit = 8,		// APE voltage during UNernst control out of tolerance
+	IpReRefOutsideLimit = 9,	// Reference current on RE (20µA) out of tolerance
+	PhOutsideLimit = 10,		// ph outside (se)
+	RhhOutsideLimit = 11,		// rhh outside (se)
+	LeackageRateOutside = 12,	// leackage rate outside (all)
+	EvacuatedPressureOutside = 13,// evacuated pressure outside (all)
+	FlowOutside = 14,			// flow outside (all)
+	PressureOutside = 15,		// pressure outside (all)
+	GasControlFault = 16,		// gas control fault (all)
+	ContactRefNok = 17,			// contact reference sensor nio (all)
+	ValueNotPlausible = 18,		// value not plausible (se)
+	ImageProcessing = 19,		// image processing io part (mae se)
+	ImageProcessingBox = 20,	// (mae se)
+	NotTrimmable = 21,			// not trimmable (se)
+	ActiveAreaDemaged = 22,		// active area demaged (se)
+	RisingTooLow = 23,			// rising ip too low (se)
+	TimeoutReached = 24,		// timeout reached (se)
+	RawLimitReached = 25,		// raw limit reached (se)
+	MaxPassageReached = 26,		// max passage reached (se)
+	OutsideHole = 27,			// outside hole (se)
+	IpAboveRangeAtStart = 28,	// ip above range at start (se)
+	MinCrossingCount = 29,		// min crossing count violated (se)
+	ReworkOnceAgainRework = 30,	// rework once again rework state (se)
+	MinCutCountBelow = 31,		// min cut count below (se)
+};
+#endif
 
 //retain data
 struct SETrimmingRetain
@@ -167,55 +208,40 @@ struct ProcessDataTrimming
 	float YPosition; // y position image processing
 	float ZPosition; // z position image processing  
 	float TrimmingDiameter;  // trimming width
-
 	float IpEndCheck;	//ip at end check
-	
 	float IpRawLimit;	//ip raw limit
 	float IpFineLimit;	//ip fine limit
-
 	float MinimalDeviationAbs;		//min deviation 
-
 	float IpLowerLimit;		//ip lower limit
 	float IpUpperLimit;		//ip upper limit
-
 	float IpActCut;		//ip at actual cut
-	long long TrimmingTimeActCut;	//trimming time at actual cut
-																																			
+	long long TrimmingTimeActCut;	//trimming time at actual cut																														
 	float IpLastCut;		//ip last cut
 	long long TrimmingTimeLastCut;		//trimming time at last cut
-
 	float IpDiff;	//ip difference
 	float IpDelta;	//ip delta
-
 	float IpFirstCut;	//ip first cut
 	float Ipn;			//ipn
 	float IpnLast;		//ipn last 
 	float IpMax;		//ip max
-
 	float ZeroPos;	//zero position
 	float DiffPos;	//difference position
-
 	bool OutsideHole;	//outside hole flag
 	unsigned int AdditionalCuts;		//additional cuts
-
 	float PosXMax;	//max x pos at trimming
 	float PosXMin;	//min x pos at trimming
 	float PosYMax;	//max y pos at trimming
 	float PosYMin;	//min y pos at trimming
 	float PosXMaxFine;	//max x pos at fine trimming
-
 	float PosXActCut;	//actual cut position x-axis
 	float PosYActCut;	//actual cut position y-axis
-
 	float PosXLastCut;	//last cut position x-axis
 	float PosYLastCut;	//last cut position y-axis
-
 	int CrossingCount; 			 //crossing count
 	int CrossingCountEntire;     //entire crossing count           
 	unsigned int CutCount;		//cut count over all
 	unsigned int CutCountRaw;	//cut count at raw trimming
 	unsigned int CutCountFine;	//cut count at fine trimming
-
 	float ActRhh;	//actual rhh (cyclic measurement)
 	float ActIp;	//actual ip (cyclic measurement)
 	float ActRi;	//actual ri (cyclic measurement)
@@ -225,11 +251,13 @@ struct ProcessDataTrimming
 	//Referece cell
 	float ActIpRef[2]; //actual ip reference cell (cyclic measurement)
 
-
-	float fUApeAtIPu4; // 
-	float fUNernst; // 
-	float fIRe;
-	float fUhMax;
+	float fUApeAtIPu; // 
+	float fUNernst;   // 
+	float fIRe1;      //
+	float fIRe2;     //
+	float fUhMax;    //
+	float fIpPoint1; //
+	float fIpPoint2; //
 
 	float TrimmingCutXPos[100];	//trimming cut x position
 	float TrimmingCutYPos[100];	//trimming cut y position
@@ -281,6 +309,7 @@ struct DataImageProcessing
 
 enum class EProcessStep
 {
+	Undefined = -1,
 	Initialization,
 	Heating,
 	MeasureIpRefCell1,
@@ -335,13 +364,11 @@ private:
 	__int64 CoolingStartTime;	//cooling start time
 	
 	__int64 TimerStart {};
-	bool bFinished {};
-	/*int*/ EProcessStep ProcessStep;	//process step
+	EProcessStep ProcessStep;	//process step
 	EProcessStep CurrProcessStep;	//process step
 	int NormalStep;		//normal step
 	int StabilityStep;	//stability step
 	
-//	unsigned int NormalNumber;	//number of normal insert
 	unsigned int ChamberState;	//chamber state
 	float ChamberPressureActual;//actual chamber pressure
 	float ChamberPressureActualArray[4];//actual chamber pressure array
@@ -423,7 +450,7 @@ public:
 	int SetPositionImageProcessing ( int Tiepoint, float XPos, float YPos, float ZPos, float Diameter );
 	void SetDigitalIn( unsigned int DigitalIn );//set digital input	(handshake plc)
 	unsigned int GetDigitalOut( void );	//get digital output (handshake plc)
-	float IpCorrection( float IpMeasured );		//ip correction												
+	float IpCorrection( float IpMeasured, float fKValue);		//ip correction												
 	float IpCorrectionOffsetAndDynamic( float IpMeasured, bool OffsetGasoline = true);	//ip correction and dynamics
 	bool DeinstallThreadRequested( void );//check deinstall thread request
 	void HandleProcess(void);	//handle process
@@ -435,7 +462,8 @@ public:
 	int DieselQualification();		//diesel qualification
 	int TrimmingEntryCheck();	//trimming entry check
 	int TrimmingEndCheck();	//trimming end check
-	int SavePartsJournal(ProcessType Type);	//save part journal
+	int SavePartsJournal(void);	//save part journal
+	int SaveIpSelectionPartsJournal(ProcessType Type); //save part journal for ip selection process
 	int SaveNormalJournal();	//save normal journal
 	//get bnew serial number and code
 	int GetNewSerialNumberAndCode( int PartStatus, unsigned int *Number, char Code[6] );
@@ -459,12 +487,14 @@ public:
 	static HANDLE hThreadHandleProcessChamber[CHAMBER_COUNT];	//static thread handle for each process chamber
 	static HANDLE ghMutex[CHAMBER_COUNT]; 
 
+	float CalcIPu4OrUPu4TwoPointMeas(float fIPu1_UPu1, float fIPu2_UPu2, float fUn1, float Un2, float UnTarget);
+	
 	//precess type
 	ProcessType getProcessType(void)
 	{
 		return(eProcessType);
 	} 
-
+	int PerformCalib(void);
 };
 
 	//---------------------------------------------------------------------------------------------------------
