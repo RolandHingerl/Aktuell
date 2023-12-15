@@ -1023,8 +1023,8 @@ bool SEMeasurementCell::IsRiStable( int Tiepoint )
 	// if( ProcessTypeLocal == 	ProcessType::Ip4Measure2PointUp )		// 11: IP4 measurement via 2-point UP measurement
 	{
 		if( ( FuncRetVal == 0 ) &&
-				( Value.Value >= ( ParamTrimmCell->ParamMainTrimmingCell.HeatingRiTrimming + ParamTrimmCell->ParamMainTrimmingCell.HeatingRiOffset + ParamTrimmCell->ParamRiStability.RiStabilityLowerLimit ) ) &&
-				( Value.Value <= ( ParamTrimmCell->ParamMainTrimmingCell.HeatingRiTrimming + ParamTrimmCell->ParamMainTrimmingCell.HeatingRiOffset + ParamTrimmCell->ParamRiStability.RiStabilityUpperLimit ) ) )
+				( Value.Value >= ( ParamTrimmCell->ParamMainTrimmingCell.HeatingRiSelection/*HeatingRiTrimming*/ + ParamTrimmCell->ParamMainTrimmingCell.HeatingRiOffset + ParamTrimmCell->ParamRiStability.RiStabilityLowerLimit)) &&
+				( Value.Value <= ( ParamTrimmCell->ParamMainTrimmingCell.HeatingRiSelection/*HeatingRiTrimming */ +ParamTrimmCell->ParamMainTrimmingCell.HeatingRiOffset + ParamTrimmCell->ParamRiStability.RiStabilityUpperLimit)))
 		{
 			RetVal = true;
 		}
@@ -1442,9 +1442,9 @@ int SETrimmingCell::GenerateTestSequence_IP450UNernstControl(TestSequenceParam P
 	const float rQHShiLim = 1.2f;
 
 	TFlwHeaterColdResCompIn(LSTestHandle, fMeasTime, uFlags,
-		1.9f, //tTest.GetVal("TD%s.HeatColdRes.RHkMin"), 
+		Parameter.fRHkMin,//1.9f, //tTest.GetVal("TD%s.HeatColdRes.RHkMin"), 
 		0.5f, //tTest.GetVal("TD%s.HeatColdRes.HeatEnergyMax"),
-		1.0f, //tTest.GetVal("TD%s.HeatColdRes.HeatVoltMax"),
+		Parameter.fHeatVoltMax,//1.0f, //tTest.GetVal("TD%s.HeatColdRes.HeatVoltMax"),
 		20.0f,
 		3.85f,//tTest.GetVal("TD%s.HeatColdRes.TempComp.Alpha"),
 		rQUHloLim, rQUHhiLim, rQHSloLim, rQHShiLim,
@@ -1621,9 +1621,9 @@ int SETrimmingCell::GenerateTestSequence_IP450TwoPointMeasUp( TestSequenceParam 
 	const float rQHShiLim = 1.2f;
 
 	TFlwHeaterColdResCompIn(LSTestHandle, fMeasTime, uFlags,
-		1.9f, //tTest.GetVal("TD%s.HeatColdRes.RHkMin"), 
-		0.5f, //tTest.GetVal("TD%s.HeatColdRes.HeatEnergyMax"),
-		1.0f, //tTest.GetVal("TD%s.HeatColdRes.HeatVoltMax"),
+		Parameter.fRHkMin,//1.9f, //tTest.GetVal("TD%s.HeatColdRes.RHkMin"), 
+		0.5f,			  //tTest.GetVal("TD%s.HeatColdRes.HeatEnergyMax"),
+		Parameter.fHeatVoltMax,//1.0f, //tTest.GetVal("TD%s.HeatColdRes.HeatVoltMax"),
 		20.0f,
 		3.85f, //tTest.GetVal("TD%s.HeatColdRes.TempComp.Alpha"),
 		rQUHloLim, rQUHhiLim, rQHSloLim, rQHShiLim,
@@ -2191,7 +2191,7 @@ int SETrimmingCell::Initializing( ParamStationDataTrimmingCell *ParamStationTrim
 	printf( "Cell[%d]:MCxAssignCell=%x\n", CellId, 0x0000000F << ( ( CellId - 1 ) * 4 ) );
 
 	//init line resistance
-	FuncRetVal = MCxInitRL( LSTestHandle, 
+	FuncRetVal = MCxInitRL(	 LSTestHandle, 
 													( LONG ) pow( 2.0f, CellId - 1 ), 
 													ParamStationTrimmCell->ParamHeaterCabelResistance[0],  
 													ParamStationTrimmCell->ParamHeaterCabelResistance[1],
@@ -2543,6 +2543,9 @@ TestSequenceParam SEMeasurementCell::PrepParameter(void)
 		Parameter.MeasureFLO = 1.0f;
 	}
 
+
+	Parameter.fRHkMin = ParamTrimmCell->ParamMainTrimmingCell.fSeRHkMin;
+	Parameter.fHeatVoltMax = ParamTrimmCell->ParamMainTrimmingCell.fRHkVMax;
 
 	Parameter.fTimeStartUp1 = ParamTrimmCell->ParamMainTrimmingCell.fTimeStartUp1;				//APE pump voltage start time point of measurement 1
 	Parameter.fUp1Target = ParamTrimmCell->ParamMainTrimmingCell.fUp1Target;

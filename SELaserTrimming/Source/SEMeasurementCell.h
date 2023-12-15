@@ -167,6 +167,8 @@ struct TestSequenceParam
 	float fUp2Target;
 	float fWaitingTimeIp2Un2Meas;
 	float fIntTimeMeasPoint2;
+	float fRHkMin;
+	float fHeatVoltMax;
 };
 
 

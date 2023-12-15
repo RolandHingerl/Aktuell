@@ -50,7 +50,7 @@
 		#define SW_VERSION "SIMU"
 	#else
 		#ifdef _DEBUG
-		 #define SW_VERSION "2023.0509"
+		 #define SW_VERSION "2023.1117"
 		#else
 		 #define SW_VERSION "x.xx"
 		#endif

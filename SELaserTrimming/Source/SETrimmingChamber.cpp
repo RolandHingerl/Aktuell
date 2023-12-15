@@ -732,13 +732,13 @@ void SETrimmingChamber::HandleProcess(void)
 				{	
 					printf("abs(ChamberPressureActual - ParamTrimmChamber.ParamTrimmCell.ParamIpMeasurement.PSetpoint): %f, PMaxAllowedDiff: %f\n", 
 						abs(ChamberPressureActual - ParamTrimmChamber.ParamTrimmCell.ParamIpMeasurement.PSetpoint), ParamTrimmChamber.ParamTrimmCell.ParamIpMeasurement.PMaxAllowedDiff);
-					SetPartState(i + 1, Nio, PressureOutside);
+					SetPartState(i + 1, SelectGasoline, PressureOutside);
 					SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.TrimmingDone = true;
 				}
 
 				if (abs(ChamberFlowActual - ParamTrimmChamber.ParamTrimmCell.ParamIpMeasurement.FlowSetpoint) > ParamTrimmChamber.ParamTrimmCell.ParamIpMeasurement.FlowMaxAllowedDiff)
 				{
-					SetPartState(i + 1, Nio, FlowOutside);
+					SetPartState(i + 1, SelectGasoline, FlowOutside);
 					SETrimmingValues.SETrimmingValuesTiepoint[i].ProcessData.TrimmingDone = true;
 				}
 			}
@@ -1513,6 +1513,7 @@ int SETrimmingChamber::GasControl( void )
 #if defined (REF_SIMULATION)
 	printf("FEF_SIMULATION: No gas control");
 #else
+
 	ReferenceCell->GetLastIpMean(1,3,&IpAct);
 	printf( "Chamber[%d]:Gaskontrolle:IpRef1[uA]=%f\n", ChamberId, IpAct * 1.0e6f );
 	IpDiff = abs( ( IpAct / ( ParamStationTrimmChamber.ParamStationRefCell.ParamStationMainReferenceCell.IpSetpointRef[0] / 1.0e6f ) - 1.0f ) * 100.0f );
@@ -1538,7 +1539,7 @@ int SETrimmingChamber::GasControl( void )
 		if( GasControlOk == false )
 		{
 			printf("3: Gas control niO!\n");
-			SetPartState( i + 1, Rework, GasControlFault );
+			SetPartState( i + 1, SelectGasoline, GasControlFault );
 			SETrimmingValues.SETrimmingValuesTiepoint[ i ].ProcessData.TrimmingDone = true;
 		}
 	}
@@ -1796,8 +1797,71 @@ void SETrimmingChamber::BmwQualification(ProcessType eType)
 				SetPartState(iPartNo + 1, SelectGasoline, ValueNotPlausible);
 			}
 
-			//Heater hot resistance RHh
-			TrimmCell->GetLastValue(iPartNo + 1, IMT_RHh, 102, &Value);
+			if (ParamTrimmChamber.ParamTrimmCell.ParamIpMeasurement.EvaluateRhh == 1)
+			{
+				//Heater hot resistance RHh
+				TrimmCell->GetLastValue(iPartNo + 1, IMT_RHh, 102, &Value);
+				if (_isnan(Value.Value) == 0)
+				{
+					float fLowerLimit = ParamTrimmChamber.ParamTrimmCell.ParamIpMeasurement.RhhLowerLimit; //Ohm
+					float fUpperLimit = ParamTrimmChamber.ParamTrimmCell.ParamIpMeasurement.RhhUpperLimit; //Ohm
+					if (!CheckBounds(Value.Value, fLowerLimit, fUpperLimit))
+					{
+						printf("Chamber[%d]:SE%d:Rhh=%f\n", ChamberId, iPartNo + 1, Value.Value);
+						SetPartState(iPartNo + 1, SelectGasoline, RhhOutsideLimit);
+					}
+				}
+				else
+				{
+					SETrimmingValues.SETrimmingValuesTiepoint[iPartNo].ProcessData.TrimmingDone = true;
+					SetPartState(iPartNo + 1, SelectGasoline, ValueNotPlausible);
+				}
+			}
+
+			//Heater power PH
+			if (ParamTrimmChamber.ParamTrimmCell.ParamIpMeasurement.EvaluatePh == 1)
+			{
+				TrimmCell->GetLastValue(iPartNo + 1, IMT_PH, 102, &Value);
+				if (_isnan(Value.Value) == 0)
+				{
+					float fLowerLimit = ParamTrimmChamber.ParamTrimmCell.ParamIpMeasurement.PhLowerLimit; //Watt
+					float fUpperLimit = ParamTrimmChamber.ParamTrimmCell.ParamIpMeasurement.PhUpperLimit; //Watt
+					if (!CheckBounds(Value.Value, fLowerLimit, fUpperLimit))
+					{
+						printf("Chamber[%d]:SE%d:Ph=%f\n", ChamberId, iPartNo + 1, Value.Value);
+						SetPartState(iPartNo + 1, SelectGasoline, PhOutsideLimit);
+					}
+				}
+				else
+				{
+					SETrimmingValues.SETrimmingValuesTiepoint[iPartNo].ProcessData.TrimmingDone = true;
+					SetPartState(iPartNo + 1, SelectGasoline, ValueNotPlausible);
+				}
+			}
+		}
+#if 1
+		//Heater hot resistance RHk
+		TrimmCell->GetLastValue(iPartNo + 1, IMT_RHk, 0, &Value);
+		if (_isnan(Value.Value) == 0)
+		{
+			float fLowerLimit = ParamTrimmChamber.ParamTrimmCell.ParamMainTrimmingCell.fRHkMin; //Ohm
+			float fUpperLimit = ParamTrimmChamber.ParamTrimmCell.ParamMainTrimmingCell.fRHkMax; //Ohm
+			if (!CheckBounds(Value.Value, fLowerLimit, fUpperLimit))
+			{
+				printf("Chamber[%d]:SE%d:Rhk=%f\n", ChamberId, iPartNo + 1, Value.Value);
+				SetPartState(iPartNo + 1, SelectGasoline, RhkOutsideLimit);
+			}
+		}
+		else
+		{
+			SETrimmingValues.SETrimmingValuesTiepoint[iPartNo].ProcessData.TrimmingDone = true;
+			SetPartState(iPartNo + 1, SelectGasoline, ValueNotPlausible);
+		}
+#endif
+		//Heater hot resistance RHh
+		if (ParamTrimmChamber.ParamTrimmCell.ParamIpMeasurement.EvaluateRhh == 1)
+		{
+			TrimmCell->GetLastValue(iPartNo + 1, IMT_RHh, 101, &Value);
 			if (_isnan(Value.Value) == 0)
 			{
 				float fLowerLimit = ParamTrimmChamber.ParamTrimmCell.ParamIpMeasurement.RhhLowerLimit; //Ohm
@@ -1813,9 +1877,12 @@ void SETrimmingChamber::BmwQualification(ProcessType eType)
 				SETrimmingValues.SETrimmingValuesTiepoint[iPartNo].ProcessData.TrimmingDone = true;
 				SetPartState(iPartNo + 1, SelectGasoline, ValueNotPlausible);
 			}
+		}
 
-			//Heater power PH
-			TrimmCell->GetLastValue(iPartNo + 1, IMT_PH, 102, &Value);
+		//Heater power PH
+		if (ParamTrimmChamber.ParamTrimmCell.ParamIpMeasurement.EvaluatePh == 1)
+		{
+			TrimmCell->GetLastValue(iPartNo + 1, IMT_PH, 101, &Value);
 			if (_isnan(Value.Value) == 0)
 			{
 				float fLowerLimit = ParamTrimmChamber.ParamTrimmCell.ParamIpMeasurement.PhLowerLimit; //Watt
@@ -1831,42 +1898,6 @@ void SETrimmingChamber::BmwQualification(ProcessType eType)
 				SETrimmingValues.SETrimmingValuesTiepoint[iPartNo].ProcessData.TrimmingDone = true;
 				SetPartState(iPartNo + 1, SelectGasoline, ValueNotPlausible);
 			}
-		}
-
-		//Heater hot resistance RHh
-		TrimmCell->GetLastValue(iPartNo + 1, IMT_RHh, 101, &Value);
-		if (_isnan(Value.Value) == 0)
-		{
-			float fLowerLimit = ParamTrimmChamber.ParamTrimmCell.ParamIpMeasurement.RhhLowerLimit; //Ohm
-			float fUpperLimit = ParamTrimmChamber.ParamTrimmCell.ParamIpMeasurement.RhhUpperLimit; //Ohm
-			if (!CheckBounds(Value.Value, fLowerLimit, fUpperLimit))
-			{
-				printf("Chamber[%d]:SE%d:Rhh=%f\n", ChamberId, iPartNo + 1, Value.Value);
-				SetPartState(iPartNo + 1, SelectGasoline, RhhOutsideLimit);
-			}
-		}
-		else
-		{
-			SETrimmingValues.SETrimmingValuesTiepoint[iPartNo].ProcessData.TrimmingDone = true;
-			SetPartState(iPartNo + 1, SelectGasoline, ValueNotPlausible);
-		}
-
-		//Heater power PH
-		TrimmCell->GetLastValue(iPartNo + 1, IMT_PH, 101, &Value);
-		if (_isnan(Value.Value) == 0)
-		{
-			float fLowerLimit = ParamTrimmChamber.ParamTrimmCell.ParamIpMeasurement.PhLowerLimit; //Watt
-			float fUpperLimit = ParamTrimmChamber.ParamTrimmCell.ParamIpMeasurement.PhUpperLimit; //Watt
-			if (!CheckBounds(Value.Value, fLowerLimit, fUpperLimit))
-			{
-				printf("Chamber[%d]:SE%d:Ph=%f\n", ChamberId, iPartNo + 1, Value.Value);
-				SetPartState(iPartNo + 1, SelectGasoline, PhOutsideLimit);
-			}
-		}
-		else
-		{
-			SETrimmingValues.SETrimmingValuesTiepoint[iPartNo].ProcessData.TrimmingDone = true;
-			SetPartState(iPartNo + 1, SelectGasoline, ValueNotPlausible);
 		}
 
 		// RiMin
@@ -2387,15 +2418,15 @@ int SETrimmingChamber::SaveIpSelectionPartsJournal(ProcessType Type)
 						"Massenstrom;"
 						"IP - Offset;"
 						"SE in Selektionstoleranz;"
-						"Pumpstrom;"
-						"SE außer Selektionstoleranz;"
+						"SE außer Selektionstoleranz (IP450);"
+						"Pumpstrom (IP450) nicht stabil;"
 						"Kont. HZ/SE oder Ri;"
 						"Heizerkaltwiderstand;"
 						"Innenwiderstand AC;"
 						"Heizerspannung;"
 						"Nernstspannung;"
 						"Pumpspannung;"
-						"Referenzstrom;"
+						"Referenzstrom (Ip,ref);"
 						"Heizleistung;"
 						"Heizerheißwiderstand;"
 						"Leckagerate;"
@@ -2885,11 +2916,11 @@ int SETrimmingChamber::SaveIpSelectionPartsJournal(ProcessType Type)
 
 				if (SETrimmingValues.AssemblyDataCommon.ProcessType == 1)
 				{
-					fprintf_s(JournalDataFile, "%.3f;", ParamTrimmChamber.ParamTrimmCell.ParamMainTrimmingCell.HeatingRiSelection); //heating 
+					fprintf_s(JournalDataFile, "%.3f;", ParamTrimmChamber.ParamTrimmCell.ParamMainTrimmingCell.HeatingRiTrimming); //heating 
 				}
 				else
 				{
-					fprintf_s(JournalDataFile, "%.3f;", ParamTrimmChamber.ParamTrimmCell.ParamMainTrimmingCell.HeatingRiTrimming); //heating
+					fprintf_s(JournalDataFile, "%.3f;", ParamTrimmChamber.ParamTrimmCell.ParamMainTrimmingCell.HeatingRiSelection); //heating
 				}
                 //parameter from type data 
 				//heating power
